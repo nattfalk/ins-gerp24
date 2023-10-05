@@ -120,8 +120,9 @@ VBint:					;Blank template VERTB interrupt
 
 	include	"common/textwriter.s"
 	; include	"common/doteffect.s"
-	include	"common/textlogo.s"
-	include	"common/textlogo_part2.s"
+	
+	include	"parts/textlogo.s"
+	include	"parts/textlogo_part2.s"
 
 ********** Fastmem Data **********
 
