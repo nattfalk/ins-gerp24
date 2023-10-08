@@ -51,7 +51,7 @@ TextLogo_Run:
 	bsr	WaitBlitter
 
         move.l  a6,-(sp)
-        lea.l   .text(pc),a0
+        lea.l   TLText(pc),a0
         lea.l   Sintab,a1
         lea.l   Costab,a2
         move.l  DrawBuffer,a3
@@ -133,9 +133,12 @@ TextLogo_Run:
         ext.l   d3
         divs.w  #10,d3
 
+        lea.l   TLCharPositions,a1
+
         moveq   #11-1,d7
 .loop:  move.w  d0,d4
         lsr.w   #7,d4
+        move.w  d4,(a1)+
         move.b  d4,d5
         ; Get index to shifted font
         lsr.w   #3,d4
@@ -144,6 +147,7 @@ TextLogo_Run:
         ; Caculate offset in screen
         move.w  d1,d6
         lsr.w   #7,d6
+        move.w  d6,(a1)+
         mulu    #40,d6
         add.w   d6,d4
 
@@ -188,8 +192,6 @@ I       SET     I+1
 .done:  move.l  (sp)+,a6
         rts
 
-.text:          dc.b    'INSANE 2024'   ; 11 chars
-                even
 .width:         dc.w    1
 .centerX:       dc.w    0
 .centerY:       dc.w    0
@@ -197,7 +199,7 @@ I       SET     I+1
                 dc.w    $7aa,$8ab,$9bc,$9cd,$add,$bee,$cff,$dff
 
 TextLogo_Interrupt:
-        add.w   #8,TLMoveX
+        add.w   #-8,TLMoveX
         add.w   #12,TLMoveY
         
         add.w   #1,TLWidthStep
@@ -226,3 +228,6 @@ TLWidthStep:    dc.w    0
 TLColorIndex:   dc.w    0
 TLMoveX:        dc.w    0
 TLMoveY:        dc.w    0
+TLCharPositions:ds.w    11*2
+TLText:         dc.b    'INSANE 2024'   ; 11 chars
+                even

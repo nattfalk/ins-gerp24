@@ -22,6 +22,8 @@ Demo:
     
 	bsr	TextLogo_Precalc
 
+	move.l	#TLCopper,$80(a6)
+
 ********** Main loop **********
 MainLoop:
 	move.w	#$12c,d0
@@ -107,19 +109,20 @@ VBint:	movem.l	d0/a0/a6,-(sp)
 .notvb:	movem.l	(sp)+,d0/a0/a6
 	rte
 
-	include	"common/textwriter.s"
+	; include	"common/textwriter.s"
 	; include	"common/doteffect.s"
-	
+	include	"common/fade.s"
+
 	include	"parts/textlogo.s"
 	include	"parts/textlogo_part2.s"
 
 ********** Fastmem Data **********
 			even
-DrawBuffer:		dc.l Screen2
-ViewBuffer:		dc.l Screen
+DrawBuffer:		dc.l	Screen2
+ViewBuffer:		dc.l	Screen
 
 EffectsTable:		dc.l	16*50, TextLogo_Init, TextLogo_Run, TextLogo_Interrupt
-			dc.l	19*50, TextLogoPart2_Init, TextLogoPart2_Run, TextLogoPart2_Interrupt
+			dc.l	22*50, TextLogoPart2_Init, TextLogoPart2_Run, TextLogoPart2_Interrupt
 			dc.l	-1,-1
 EffectsPointer:		dc.l	EffectsTable
 EffectsInitPointer:	dc.l	EffectsTable+4
@@ -127,6 +130,7 @@ FrameCounter:		dc.l	0
 
 FromPalette:		dc.w	$000,$000
 ToPalette:		dc.w	$158,$fff
+
 
 ;		0123456789012345678901234567890123456789
 Text:			dc.b	'THIS ',2,'IS ',3,'A TEST!',10
@@ -155,12 +159,44 @@ TLPalette:
 	dc.w	$0182,$0012
 
 TLBplPtrs:
-	dc.w	$00e0,$0000
-	dc.w	$00e2,$0000
+	dc.w	$00e0,$0000,$00e2,$0000
 	dc.w	$0100,$1200
 
 	dc.w	$ffdf,$fffe
 	dc.w	$ffff,$fffe
+
+; TL2Copper:
+; 	dc.w	$01fc,$0000
+; 	dc.w	$008e,$2c81
+; 	dc.w	$0090,$2cc1
+; 	dc.w	$0092,$0038
+; 	dc.w	$0094,$00d0
+; 	dc.w	$0106,$0c00
+; 	dc.w	$0108,$0000
+; 	dc.w	$010a,$0000
+; 	dc.w	$0102,$0000
+
+; TL2Palette:
+; 	dc.w	$0180,$0012
+; 	dc.w	$0182,$0dff
+
+; TL2BplPtrs:
+; 	dc.w	$ac01,$fffe,$00e0,$0000,$00e2,$0000,$0100,$1200
+	
+; 	; dc.w	$ad01,$fffe,$00e0,$0000,$00e2,$0000
+; 	; dc.w	$ae01,$fffe,$00e0,$0000,$00e2,$0000
+; 	; dc.w	$af01,$fffe,$00e0,$0000,$00e2,$0000
+; 	; dc.w	$b001,$fffe,$00e0,$0000,$00e2,$0000
+; 	; dc.w	$b101,$fffe,$00e0,$0000,$00e2,$0000
+; 	; dc.w	$b201,$fffe,$00e0,$0000,$00e2,$0000
+; 	; dc.w	$b301,$fffe,$00e0,$0000,$00e2,$0000
+; 	; dc.w	$b401,$fffe,$00e0,$0000,$00e2,$0000
+	
+; 	dc.w	$b501,$fffe,$0100,$0200
+
+; 	; dc.w	$ffdf,$fffe
+; 	dc.w	$ffff,$fffe
+
 
 Font:	incbin	"data/vedderfont5.8x520.1.raw"
 
