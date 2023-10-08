@@ -1,5 +1,5 @@
 TextLogo_Precalc:
-        lea.l   TextLogoFont,a1
+        lea.l   TLFont,a1
         moveq   #8-1,d7
 .xLoop: lea.l   Font,a0
         move.w  #520-1,d6
@@ -55,7 +55,7 @@ TextLogo_Run:
         lea.l   Sintab,a1
         lea.l   Costab,a2
         move.l  DrawBuffer,a3
-        lea.l   TextLogoFont,a4
+        lea.l   TLFont,a4
 
         ; Ease in
         move.w  .width,d2

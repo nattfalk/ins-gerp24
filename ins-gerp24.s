@@ -171,6 +171,5 @@ Font:	incbin	"data/vedderfont5.8x520.1.raw"
 Screen:	ds.b	h*bwid
 Screen2:ds.b	h*bwid
 
-TextLogoFont:
-	ds.w	520*8
+TLFont:	ds.w	520*8
 	END
