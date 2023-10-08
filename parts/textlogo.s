@@ -14,20 +14,22 @@ TextLogo_Precalc:
         rts
 
 TextLogo_Init:
-	lea	Screen,a1
-	bsr.w	ClearScreen
-	lea	Screen2,a1
-	bsr.w	ClearScreen
+	lea	Screen,a0
+        move.l  #(256<<6)+(320>>4),d0
+	bsr.w	BltClr
+	lea	Screen2,a0
+        move.l  #(256<<6)+(320>>4),d0
+	bsr.w	BltClr
 	bsr	WaitBlitter
 
 	lea	Screen,a0
 	; move.l	#(320>>3)*256,d0
         moveq   #0,d0
-	lea	BplPtrs+2,a1
+	lea	TLBplPtrs+2,a1
 	moveq	#1-1,d1
-	bsr.w	PokePtrs
+	bsr.w	SetBpls
 
-	move.l	#Copper,$80(a6)
+	move.l	#TLCopper,$80(a6)
         rts
 
 MAX_RADIUS      = 120
@@ -38,12 +40,14 @@ TextLogo_Run:
 
 	move.l	a3,a0
 	; move.l	#(320>>3)*256,d0
-	lea	BplPtrs+2,a1
+        moveq   #0,d0
+	lea	TLBplPtrs+2,a1
 	moveq	#1-1,d1
-	bsr.w	PokePtrs
+	bsr.w	SetBpls
 
-	move.l	a2,a1
-	bsr	ClearScreen
+	move.l	a2,a0
+        move.l  #(256<<6)+(320>>4),d0
+	bsr	BltClr
 	bsr	WaitBlitter
 
         move.l  a6,-(sp)
@@ -179,7 +183,7 @@ I       SET     I+1
         lea.l   .palette(pc),a0
         move.w  TLColorIndex(pc),d0
         add.w   d0,d0
-        move.w  (a0,d0.w),Palette+6
+        move.w  (a0,d0.w),TLPalette+6
 
 .done:  move.l  (sp)+,a6
         rts
