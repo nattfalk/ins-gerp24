@@ -1,9 +1,32 @@
+************************************************************
 Quads_Init:
-        lea.l   TLPalette,a0
-        move.w  #$fff,6(a0)
+        lea.l   QuadsMask,a0
+        move.w  #256-1,d7
+.yloop: moveq   #5-1,d6
+.clr:   clr.l   (a0)+
+        dbf     d6,.clr
+        moveq   #5-1,d6
+.fill:  move.l  #-1,(a0)+
+        dbf     d6,.fill
+        dbf     d7,.yloop
 
+        lea.l   QuadsMask,a0
+        moveq   #0,d0
+	lea	QuadsBplPtrs+10,a1
+	moveq	#1-1,d1
+	bsr.w	SetBpls
+
+        move.l  DrawBuffer(pc),a0
+        move.l  DrawBuffer+4(pc),a1
+        move.l  #256*10-1,d7
+.fill2: move.l  #-1,(a0)+
+        move.l  #-1,(a1)+
+        dbf     d7,.fill2
+
+	move.l	#QuadsCopper,$80(a6)
         rts
 
+************************************************************
 Quads_Run:
 	movem.l	DrawBuffer(PC),a2-a3
 	exg	a2,a3
@@ -11,7 +34,7 @@ Quads_Run:
 
 	move.l	a3,a0
         moveq   #0,d0
-	lea	TLBplPtrs+2,a1
+	lea	QuadsBplPtrs+2,a1
 	moveq	#1-1,d1
 	bsr.w	SetBpls
 
@@ -105,7 +128,6 @@ Quads_Run:
         addq.l  #2,a4
 
         lea.l   Quads_RotatedCoords,a0
-        ; move.w  Quads_ZAngle,d0
         move.w  20(a0),d0
         and.w   #$f,d0
         move.w  d0,d1
@@ -113,8 +135,13 @@ Quads_Run:
         or.w    d1,d0
         lsl.w   #4,d1
         or.w    d1,d0
-        lea.l   TLPalette,a0
-        move.w  d0,6(a0)
+        lea.l   Quads_ColorPtrs,a0
+        moveq   #3,d1
+        sub.w   d7,d1
+        lsl.w   #2,d1
+        ext.l   d1
+        move.l  (a0,d1.l),a0
+        move.w  d0,(a0)
 
         dbf     d7,.quadLoop
 
@@ -127,11 +154,12 @@ Quads_Run:
         move.l	#0,$64(a6)	; Clear A & D modulo
         move.l	a0,$50(a6)	; Src A
         move.l	a0,$54(a6)	; Dest (D)
-        move.w	#256*64+20,$58(a6)	; BltSize
+        move.w	#256<<6+20,$58(a6)	; BltSize
         bsr     WaitBlitter
 
         rts
 
+************************************************************
 Quads_Interrupt:
         movem.l a0-a2,-(sp)
         lea.l   Quads_FrameCounter(pc),a1
@@ -171,6 +199,8 @@ Quads_Interrupt:
 .exit:
         movem.l (sp)+,a0-a2
         rts
+
+************************************************************
                         even
 Quads_Coords:           dc.w    -80,-64, 0      ; top-left
                         dc.w     79,-64, 0      ; top-right
@@ -182,6 +212,10 @@ Quads_Origins:          dc.w    160-80, 128-64
                         dc.w    160+79, 128+63
                         dc.w    160+79, 128-64
                         dc.w    160-80, 128+63
+Quads_ColorPtrs:        dc.l    QuadsPalette+6
+                        dc.l    QuadsPalette+30
+                        dc.l    QuadsPalette+14
+                        dc.l    QuadsPalette+22
 Quads_Z:                dc.w    0, 0, 0, 0
 Quads_Angles:           dc.w    0, 0, 0, 0
 Quads_FrameCounter:     dc.w    0

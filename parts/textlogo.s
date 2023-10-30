@@ -1,3 +1,4 @@
+************************************************************
 TextLogo_Precalc:
         lea.l   TLFont,a1
         moveq   #8-1,d7
@@ -13,6 +14,7 @@ TextLogo_Precalc:
         dbf     d7,.xLoop
         rts
 
+************************************************************
 TextLogo_Init:
 	lea	Screen,a0
         move.l  #(256<<6)+(320>>4),d0
@@ -32,6 +34,7 @@ TextLogo_Init:
 	move.l	#TLCopper,$80(a6)
         rts
 
+************************************************************
 MAX_RADIUS      = 120
 TextLogo_Run:
 	movem.l	DrawBuffer(PC),a2-a3
@@ -192,12 +195,14 @@ I       SET     I+1
 .done:  move.l  (sp)+,a6
         rts
 
+                even
 .width:         dc.w    1
 .centerX:       dc.w    0
 .centerY:       dc.w    0
 .palette:       dc.w    $023,$134,$245,$356,$367,$477,$578,$699
                 dc.w    $7aa,$8ab,$9bc,$9cd,$add,$bee,$cff,$dff
 
+************************************************************
 TextLogo_Interrupt:
         add.w   #-8,TLMoveX
         add.w   #12,TLMoveY
@@ -220,9 +225,10 @@ TextLogo_Interrupt:
         clr.w   .colorTimer
 .done:  rts
 
-.colorTimer:
-        dc.w    0
+                even
+.colorTimer:    dc.w    0
 
+************************************************************
 TLAngle:        dc.w    0
 TLWidthStep:    dc.w    0
 TLColorIndex:   dc.w    0

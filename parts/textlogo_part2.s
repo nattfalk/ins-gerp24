@@ -1,7 +1,9 @@
+************************************************************
 TextLogoPart2_Init:
         move.w  #0,FCnt
         rts
 
+************************************************************
 TextLogoPart2_Run:
 	movem.l	DrawBuffer(PC),a2-a3
 	exg	a2,a3
@@ -113,6 +115,7 @@ I       SET     I+1
 .skipFade:
         rts
 
+************************************************************
 TextLogoPart2_Interrupt:
         cmp.l   #21*50,FrameCounter
         bmi     .skipFade
@@ -121,16 +124,11 @@ TextLogoPart2_Interrupt:
 .skipFade:
         rts
 
-TL2CharPositions:
-        ds.w    11*2
-TL2Movements:
-        dc.w    0,0,0,0,0,0,0,0,0,0,0
-TL2MovementCount:
-        dc.w    1
-TL2DoFade:
-        dc.w    0
-TL2FromPalette:
-        dc.w    $0012,$0dff
-TL2ToPalette:
-        dc.w    $0fff,$0fff
-;*************************************************************
+************************************************************
+                        even
+TL2CharPositions:       ds.w    11*2
+TL2Movements:           dc.w    0,0,0,0,0,0,0,0,0,0,0
+TL2MovementCount:       dc.w    1
+TL2DoFade:              dc.w    0
+TL2FromPalette:         dc.w    $0012,$0dff
+TL2ToPalette:           dc.w    $0fff,$0fff

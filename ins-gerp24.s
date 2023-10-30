@@ -1,5 +1,7 @@
 	INCLUDE "common/startup.s"
 
+; SHOW_RASTER = 1
+
 ********** Constants **********
 w	= 320
 h	= 256
@@ -21,8 +23,6 @@ Demo:
 	move.w	#$87c0,$96(a6)
     
 	bsr	TextLogo_Precalc
-
-	move.l	#TLCopper,$80(a6)
 
 ********** Main loop **********
 MainLoop:
@@ -48,7 +48,9 @@ MainLoop:
 	jsr	(a0)
 
 .mouse:
+	IFD	SHOW_RASTER
 	move.w	#$323,$180(a6)
+	ENDIF
 	btst	#6,$bfe001
 	bne.w	MainLoop
 .end:	rts
@@ -124,9 +126,9 @@ VBint:	movem.l	d0/a0/a6,-(sp)
 DrawBuffer:		dc.l	Screen2
 ViewBuffer:		dc.l	Screen
 
-EffectsTable:		;dc.l	16*50, TextLogo_Init, TextLogo_Run, TextLogo_Interrupt
-			;dc.l	22*50, TextLogoPart2_Init, TextLogoPart2_Run, TextLogoPart2_Interrupt
-			dc.l	10*50, Quads_Init, Quads_Run, Quads_Interrupt
+EffectsTable:		dc.l	16*50, TextLogo_Init, TextLogo_Run, TextLogo_Interrupt
+			dc.l	23*50, TextLogoPart2_Init, TextLogoPart2_Run, TextLogoPart2_Interrupt
+			dc.l	32*50, Quads_Init, Quads_Run, Quads_Interrupt
 			dc.l	-1,-1
 EffectsPointer:		dc.l	EffectsTable
 EffectsInitPointer:	dc.l	EffectsTable+4
@@ -169,6 +171,35 @@ TLBplPtrs:
 	dc.w	$ffdf,$fffe
 	dc.w	$ffff,$fffe
 
+QuadsCopper:
+	dc.w	$01fc,$0000
+	dc.w	$008e,$2c81
+	dc.w	$0090,$2cc1
+	dc.w	$0092,$0038
+	dc.w	$0094,$00d0
+	dc.w	$0106,$0c00
+	dc.w	$0108,$0000
+	dc.w	$010a,$0000
+	dc.w	$0102,$0000
+
+QuadsBplPtrs:
+	dc.w	$00e0,$0000,$00e2,$0000
+	dc.w	$00e4,$0000,$00e6,$0000
+	dc.w	$0100,$2200
+
+QuadsPalette:
+	dc.w	$0180,$0012
+	dc.w	$0182,$0fff	; top-left
+	dc.w	$0184,$0012
+	dc.w	$0186,$0fff	; top-right
+
+	dc.w	$ac01,$fffe
+	dc.w	$0182,$0fff	; bottom-left
+	dc.w	$0184,$0012
+	dc.w	$0186,$0fff	; bottom-right
+
+	dc.w	$ffff,$fffe
+
 ; TL2Copper:
 ; 	dc.w	$01fc,$0000
 ; 	dc.w	$008e,$2c81
@@ -208,8 +239,10 @@ Font:	incbin	"data/vedderfont5.8x520.1.raw"
 	SECTION ChipBuffers,BSS_C
 *******************************************************************************
 
-Screen:	ds.b	h*bwid
-Screen2:ds.b	h*bwid
+Screen:		ds.b	h*bwid
+Screen2:	ds.b	h*bwid
 
-TLFont:	ds.w	520*8
+QuadsMask:	ds.b	h*bwid
+
+TLFont:		ds.w	520*8
 	END
