@@ -48,7 +48,7 @@ MainLoop:
 	jsr	(a0)
 
 .mouse:
-	; move.w	#$323,$180(a6)
+	move.w	#$323,$180(a6)
 	btst	#6,$bfe001
 	bne.w	MainLoop
 .end:	rts
@@ -112,17 +112,21 @@ VBint:	movem.l	d0/a0/a6,-(sp)
 	; include	"common/textwriter.s"
 	; include	"common/doteffect.s"
 	include	"common/fade.s"
+	include "common/drawline.s"
+	include "common/rotate.s"
 
 	include	"parts/textlogo.s"
 	include	"parts/textlogo_part2.s"
+	include "parts/quads.s"
 
 ********** Fastmem Data **********
 			even
 DrawBuffer:		dc.l	Screen2
 ViewBuffer:		dc.l	Screen
 
-EffectsTable:		dc.l	16*50, TextLogo_Init, TextLogo_Run, TextLogo_Interrupt
-			dc.l	22*50, TextLogoPart2_Init, TextLogoPart2_Run, TextLogoPart2_Interrupt
+EffectsTable:		;dc.l	16*50, TextLogo_Init, TextLogo_Run, TextLogo_Interrupt
+			;dc.l	22*50, TextLogoPart2_Init, TextLogoPart2_Run, TextLogoPart2_Interrupt
+			dc.l	10*50, Quads_Init, Quads_Run, Quads_Interrupt
 			dc.l	-1,-1
 EffectsPointer:		dc.l	EffectsTable
 EffectsInitPointer:	dc.l	EffectsTable+4
