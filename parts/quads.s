@@ -35,9 +35,11 @@ Quads_Run:
         lea.l   Quads_RotatedCoords(pc),a1
         move.w  (a0),16(a1)
         move.w  2(a0),18(a1)
+        move.w  #15,20(a1)      ; Front facing normal
         moveq   #4-1,d6
 .copy:  move.w  (a0)+,(a1)+
         move.w  (a0)+,(a1)+
+        adda.l  #2,a0
         dbf     d6,.copy
         bra     .drawPoly
 
@@ -53,11 +55,8 @@ Quads_Run:
         moveq   #4-1,d6
 .rotate:
         ; Rotate
-        move.w  (a0)+,d0
-        move.w  (a0)+,d1
-        moveq   #0,d2
+        movem.w (a0)+,d0-d2
         bsr     RotatePoint
-
         ; Project
         move.w  (a4),d4
         add.w   #64,d4
@@ -69,8 +68,14 @@ Quads_Run:
         asl.l   #7,d1
         divs    d4,d1
         move.w  d1,(a1)+
-
         dbf     d6,.rotate
+        
+        ; Rotate normal
+        movem.w (a0)+,d0-d2
+        bsr     RotatePoint
+        asr.w   #1,d2           ; Scale down to 1-15
+        and.w   #$7fff,d2       ; Keep only absolute (positive) value
+        move.w  d2,Quads_RotatedCoords+20
 
 .drawPoly:
         lea.l   Quads_RotatedCoords(pc),a3
@@ -98,6 +103,18 @@ Quads_Run:
         dbf     d6,.lineLoop
         addq.l  #4,a2
         addq.l  #2,a4
+
+        lea.l   Quads_RotatedCoords,a0
+        ; move.w  Quads_ZAngle,d0
+        move.w  20(a0),d0
+        and.w   #$f,d0
+        move.w  d0,d1
+        lsl.w   #4,d1
+        or.w    d1,d0
+        lsl.w   #4,d1
+        or.w    d1,d0
+        lea.l   TLPalette,a0
+        move.w  d0,6(a0)
 
         dbf     d7,.quadLoop
 
@@ -155,8 +172,12 @@ Quads_Interrupt:
         movem.l (sp)+,a0-a2
         rts
                         even
-Quads_Coords:           dc.w    -80,-64, 79,-64, 79,63, -80,63
-Quads_RotatedCoords:    ds.w    10
+Quads_Coords:           dc.w    -80,-64, 0      ; top-left
+                        dc.w     79,-64, 0      ; top-right
+                        dc.w     79, 63, 0      ; bottom-right
+                        dc.w    -80, 63, 0      ; bottom-left
+                        dc.w      0,  0, 64     ; normal
+Quads_RotatedCoords:    ds.w    10+1
 Quads_Origins:          dc.w    160-80, 128-64
                         dc.w    160+79, 128+63
                         dc.w    160+79, 128-64
