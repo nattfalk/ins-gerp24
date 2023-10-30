@@ -1,6 +1,8 @@
 	INCLUDE "common/startup.s"
 
-; SHOW_RASTER = 1
+********** Flags **************
+PLAY_MUSIC = 1
+SHOW_RASTER = 1
 
 ********** Constants **********
 w	= 320
@@ -8,6 +10,36 @@ h	= 256
 bpls	= 1
 bpl	= w/16*2
 bwid	= bpls*bpl
+
+P61mode		= 1
+usecode		= -1
+P61pl		= usecode&$400000
+split4		= 0
+splitchans	= 1
+visuctrs	= 1
+asmonereport	= 0
+p61system	= 0
+p61exec		= 0
+p61fade		= 0
+channels	= 4
+playflag	= 0
+p61bigjtab	= 0
+opt020		= 0
+p61jump		= 0
+C		= 0
+clraudxdat	= 0
+optjmp		= 1
+oscillo		= 0
+quietstart	= 0
+use1Fx		= 0
+
+	ifeq P61mode-1
+p61cia		= 1
+lev6		= 1
+noshorts	= 0
+dupedec		= 0
+suppF01		= 1
+	endc
 
 ********** Macros **********
 WAITBLIT:macro
@@ -23,6 +55,14 @@ Demo:
 	move.w	#$87c0,$96(a6)
     
 	bsr	TextLogo_Precalc
+
+	IFD	PLAY_MUSIC
+	lea	Module,a0
+	sub.l	a1,a1
+	sub.l	a2,a2
+	moveq	#0,d0
+	jsr	P61_Init
+	ENDIF
 
 ********** Main loop **********
 MainLoop:
@@ -53,7 +93,11 @@ MainLoop:
 	ENDIF
 	btst	#6,$bfe001
 	bne.w	MainLoop
-.end:	rts
+
+.end:	IFD	PLAY_MUSIC
+	jsr	P61_End
+	ENDIF
+	rts
 
 ********** Common **********
 
@@ -120,6 +164,8 @@ VBint:	movem.l	d0/a0/a6,-(sp)
 	include	"parts/textlogo.s"
 	include	"parts/textlogo_part2.s"
 	include "parts/quads.s"
+
+	include	"include/P6112-Play.i"
 
 ********** Fastmem Data **********
 			even
@@ -234,6 +280,7 @@ QuadsPalette:
 
 
 Font:	incbin	"data/vedderfont5.8x520.1.raw"
+Module:	incbin	"data/P61.scenic_balls"
 
 *******************************************************************************
 	SECTION ChipBuffers,BSS_C
