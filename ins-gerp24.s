@@ -1,8 +1,8 @@
 	INCLUDE "common/startup.s"
 
 ********** Flags **************
-PLAY_MUSIC = 1
-SHOW_RASTER = 1
+PLAY_MUSIC = 0
+SHOW_RASTER = 0
 
 ********** Constants **********
 w	= 320
@@ -11,12 +11,13 @@ bpls	= 1
 bpl	= w/16*2
 bwid	= bpls*bpl
 
+** P61 flags
 P61mode		= 1
 usecode		= -1
 P61pl		= usecode&$400000
-split4		= 0
+split4		= 1
 splitchans	= 1
-visuctrs	= 1
+visuctrs	= 0
 asmonereport	= 0
 p61system	= 0
 p61exec		= 0
@@ -56,7 +57,7 @@ Demo:
     
 	bsr	TextLogo_Precalc
 
-	IFD	PLAY_MUSIC
+	IFEQ	PLAY_MUSIC-1
 	lea	Module,a0
 	sub.l	a1,a1
 	sub.l	a2,a2
@@ -88,13 +89,13 @@ MainLoop:
 	jsr	(a0)
 
 .mouse:
-	IFD	SHOW_RASTER
+	IFEQ	SHOW_RASTER-1
 	move.w	#$323,$180(a6)
 	ENDIF
 	btst	#6,$bfe001
 	bne.w	MainLoop
 
-.end:	IFD	PLAY_MUSIC
+.end:	IFEQ	PLAY_MUSIC-1
 	jsr	P61_End
 	ENDIF
 	rts
@@ -164,6 +165,7 @@ VBint:	movem.l	d0/a0/a6,-(sp)
 	include	"parts/textlogo.s"
 	include	"parts/textlogo_part2.s"
 	include "parts/quads.s"
+	include "parts/credits.s"
 
 	include	"include/P6112-Play.i"
 
@@ -172,9 +174,10 @@ VBint:	movem.l	d0/a0/a6,-(sp)
 DrawBuffer:		dc.l	Screen2
 ViewBuffer:		dc.l	Screen
 
-EffectsTable:		dc.l	16*50, TextLogo_Init, TextLogo_Run, TextLogo_Interrupt
-			dc.l	23*50, TextLogoPart2_Init, TextLogoPart2_Run, TextLogoPart2_Interrupt
-			dc.l	32*50, Quads_Init, Quads_Run, Quads_Interrupt
+EffectsTable:		;dc.l	16*50, TextLogo_Init, TextLogo_Run, TextLogo_Interrupt
+			;dc.l	23*50, TextLogoPart2_Init, TextLogoPart2_Run, TextLogoPart2_Interrupt
+			;dc.l	32*50, Quads_Init, Quads_Run, Quads_Interrupt
+			dc.l	20*50, Credits_Init, Credits_Run, Credits_Interrupt
 			dc.l	-1,-1
 EffectsPointer:		dc.l	EffectsTable
 EffectsInitPointer:	dc.l	EffectsTable+4
