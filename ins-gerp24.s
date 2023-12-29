@@ -177,7 +177,7 @@ ViewBuffer:		dc.l	Screen
 EffectsTable:		;dc.l	16*50, TextLogo_Init, TextLogo_Run, TextLogo_Interrupt
 			;dc.l	23*50, TextLogoPart2_Init, TextLogoPart2_Run, TextLogoPart2_Interrupt
 			;dc.l	32*50, Quads_Init, Quads_Run, Quads_Interrupt
-			dc.l	20*50, Credits_Init, Credits_Run, Credits_Interrupt
+			dc.l	40*50, Credits_Init, Credits_Run, Credits_Interrupt
 			dc.l	-1,-1
 EffectsPointer:		dc.l	EffectsTable
 EffectsInitPointer:	dc.l	EffectsTable+4

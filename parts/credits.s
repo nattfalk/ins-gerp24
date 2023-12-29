@@ -44,7 +44,7 @@ Credits_Run:
         lea.l   Credits_CubeCoords(pc),a0
         lea.l   Credits_CubePosition(pc),a1
         lea.l   Credits_Balls(pc),a2
-        lea.l   Credits_MorphTarget(pc),a3
+        movea.l Credits_MorphTargetPtr(pc),a3
         move.l  DrawBuffer(pc),a4
 
         moveq   #8-1,d7
@@ -122,9 +122,9 @@ Credits_Run:
         subq.w  #1,d7
         bmi     .done
 
-        lea.l   Credits_Text(pc),a0
+        movea.l Credits_TextPtr(pc),a0
         lea.l   Font,a1
-        lea.l   Credits_MorphTarget(pc),a2
+        movea.l Credits_MorphTargetPtr(pc),a2
         move.l  DrawBuffer(pc),a3
 .print:
         move.w  (a2)+,d0
@@ -148,7 +148,7 @@ Credits_Run:
         dbf     d7,.print
 .done:
         rts
-
+ 
 ************************************************************
 Credits_Interrupt:
         movem.l d0-d1/a0-a2,-(sp)
@@ -156,27 +156,47 @@ Credits_Interrupt:
         add.w   #1,Credits_LocalFrameCounter
         move.w  Credits_LocalFrameCounter,d0
 
-        cmp.w   #250,d0
-        bgt.b   .morph1
-        bra     .rotate
-.morph1:
-        cmp.w   #314,d0
-        bgt     .text1
+.runFx:
+        movea.l Credits_TimingPointer(pc),a0
+        move.w  (a0)+,d1
+        cmp.w   d1,d0
+        blo.s   .run
+        add.l   #4,Credits_TimingPointer
+        bra     .runFx
+.run:   move.w  (a0)+,d1
+        cmp.w   #0,d1
+        beq     .rotate
+
+.morphIn:
+        cmp.w   #1,d1
+        bne     .printText
+        ; Use 64 for morphing to straight line
+        cmp.w   #72,Credits_MorphStep
+        beq.s   .rotate
         add.w   #1,Credits_MorphStep
         bra     .rotate
 
-.text1: cmp.w   #470,d0
-        bgt.s   .morphBack1
+.printText:
+        cmp.w   #2,d1
+        bne.s   .morphOut
+        cmp.w   #128,Credits_PrintText
+        beq.s   .rotate
         add.w   #1,Credits_PrintText
         bra     .rotate
 
-.morphBack1:
-        cmp.w   #534,d0
-        bgt.s   .wait
-        move.w  #0,Credits_PrintText
+.morphOut:
+        cmp.w   #3,d1
+        bne.s   .rotate
+        cmp.w   #0,Credits_PrintText
+        beq.s   .mo2
+        add.l   #8,Credits_TextPtr
+.mo2:   move.w  #0,Credits_PrintText
+        cmp.w   #0,Credits_MorphStep
+        beq.s   .rotate
         sub.w   #1,Credits_MorphStep
-        bra     .rotate
-.wait:
+        tst.w   Credits_MorphStep
+        bne.s   .rotate
+        add.l   #8*2*2,Credits_MorphTargetPtr
 
 .rotate:
         lea.l   Credits_CubeAngles(pc),a0
@@ -209,12 +229,32 @@ Credits_Interrupt:
 
 ************************************************************
                         even
+                        ; Effect types
+                        ; 0 = Rotate
+                        ; 1 = Morph in
+                        ; 2 = Print text
+                        ; 3 = Morph out
+Credits_TimingTable:    dc.w    150,0
+                        dc.w    250,1
+                        dc.w    400,2
+                        dc.w    500,3
+                        dc.w    100+500,0
+                        dc.w    200+500,1
+                        dc.w    350+500,2
+                        dc.w    450+500,3
+                        dc.w    100+500+450,0
+                        dc.w    200+500+450,1
+                        dc.w    350+500+450,2
+                        dc.w    450+500+450,3
+Credits_TimingPointer:  dc.l    Credits_TimingTable
 Credits_LocalFrameCounter:
                         dc.w    0
 Credits_PrintText:      dc.w    0
-Credits_Text:           dc.b    '-INSANE-'
+Credits_Text:           dc.b    'GERP  24'
+                        dc.b    'PROSPECT'
+                        dc.b    ' VEDDER '
                         even
-Credits_TextCounter:    dc.w    0
+Credits_TextPtr:        dc.l    Credits_Text
 Credits_CubeCoords:     dc.w    -128,-128,-128
                         dc.w     128,-128,-128
                         dc.w     128, 128,-128
@@ -231,14 +271,25 @@ Credits_PosMove:        dc.w    0
 Credits_CubeXCenter:    dc.w    320/2
 Credits_CubeYCenter:    dc.w    256/2
 Credits_MorphStep:      dc.w    0
-Credits_MorphTarget:    dc.w    96,124
-                        dc.w    112,124
-                        dc.w    128,124
-                        dc.w    144,124
-                        dc.w    160,124
-                        dc.w    176,124
-                        dc.w    192,124
-                        dc.w    208,124
+Credits_MorphTarget:
+X                       SET     96
+                        REPT    8
+                        dc.w    X,124
+X                       SET     X+16
+                        ENDR
+
+X                       SET     168
+                        REPT    8
+                        dc.w    X,22
+X                       SET     X+16
+                        ENDR
+
+X                       SET     48
+                        REPT    8
+                        dc.w    X,216
+X                       SET     X+16
+                        ENDR
+Credits_MorphTargetPtr: dc.l    Credits_MorphTarget
 
 Credits_Balls:          dc.b    %00111100,0
                         dc.b    %01111110,0
