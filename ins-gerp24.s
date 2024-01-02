@@ -1,7 +1,7 @@
 	INCLUDE "common/startup.s"
 
 ********** Flags **************
-PLAY_MUSIC = 0
+PLAY_MUSIC = 1
 SHOW_RASTER = 0
 
 ********** Constants **********
@@ -10,37 +10,6 @@ h	= 256
 bpls	= 1
 bpl	= w/16*2
 bwid	= bpls*bpl
-
-** P61 flags
-P61mode		= 1
-usecode		= -1
-P61pl		= usecode&$400000
-split4		= 1
-splitchans	= 1
-visuctrs	= 0
-asmonereport	= 0
-p61system	= 0
-p61exec		= 0
-p61fade		= 0
-channels	= 4
-playflag	= 0
-p61bigjtab	= 0
-opt020		= 0
-p61jump		= 0
-C		= 0
-clraudxdat	= 0
-optjmp		= 1
-oscillo		= 0
-quietstart	= 0
-use1Fx		= 0
-
-	ifeq P61mode-1
-p61cia		= 1
-lev6		= 1
-noshorts	= 0
-dupedec		= 0
-suppF01		= 1
-	endc
 
 ********** Macros **********
 WAITBLIT:macro
@@ -52,17 +21,17 @@ WAITBLIT:macro
 ********** Demo **********
 Demo:
 	move.l	#VBint,$6c(a4)
-	move.w	#$c020,$9a(a6)
+	move.w	#$e020,$9a(a6)
 	move.w	#$87c0,$96(a6)
     
 	bsr	TextLogo_Precalc
 
 	IFEQ	PLAY_MUSIC-1
-	lea	Module,a0
-	sub.l	a1,a1
-	sub.l	a2,a2
-	moveq	#0,d0
-	jsr	P61_Init
+	lea	LSPMusic,a0
+	lea	LSPBank,a1
+	suba.l	a2,a2			; suppose VBR=0 ( A500 )
+	moveq	#0,d0			; suppose PAL machine
+	bsr	LSP_MusicDriver_CIA_Start
 	ENDIF
 
 ********** Main loop **********
@@ -96,7 +65,7 @@ MainLoop:
 	bne.w	MainLoop
 
 .end:	IFEQ	PLAY_MUSIC-1
-	jsr	P61_End
+	bsr	LSP_MusicDriver_CIA_Stop
 	ENDIF
 	rts
 
@@ -167,7 +136,8 @@ VBint:	movem.l	d0/a0/a6,-(sp)
 	include "parts/quads.s"
 	include "parts/credits.s"
 
-	include	"include/P6112-Play.i"
+	include "common/LightSpeedPlayer_cia.s"
+	include "common/LightSpeedPlayer.s"
 
 ********** Fastmem Data **********
 			even
@@ -287,7 +257,11 @@ QuadsPalette:
 
 
 Font:	incbin	"data/vedderfont5.8x520.1.raw"
-Module:	incbin	"data/P61.scenic_balls"
+LSPBank:incbin	"data/scenic balls.v3.lsbank"
+
+	SECTION	VariousData,DATA
+LSPMusic:
+	incbin	"data/scenic balls.v3.lsmusic"
 
 *******************************************************************************
 	SECTION ChipBuffers,BSS_C
