@@ -11,7 +11,7 @@ TextLogoPart2_Run:
 
 	move.l	a3,a0
         moveq   #0,d0
-	lea	TLBplPtrs+2,a1
+	lea	MainBplPtrs+2,a1
 	moveq	#1-1,d1
 	bsr.w	SetBpls
 
@@ -107,7 +107,7 @@ I       SET     I+1
         beq.s   .skipFade
         lea.l   TL2FromPalette,a0
         lea.l   TL2ToPalette,a1
-        lea.l   TLPalette,a2
+        lea.l   MainPalette,a2
         moveq   #50,d0
         moveq   #2-1,d1
         bsr     Fade

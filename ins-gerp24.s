@@ -174,10 +174,10 @@ VBint:	movem.l	d0/a0/a6,-(sp)
 DrawBuffer:		dc.l	Screen2
 ViewBuffer:		dc.l	Screen
 
-EffectsTable:		;dc.l	16*50, TextLogo_Init, TextLogo_Run, TextLogo_Interrupt
-			;dc.l	23*50, TextLogoPart2_Init, TextLogoPart2_Run, TextLogoPart2_Interrupt
-			;dc.l	32*50, Quads_Init, Quads_Run, Quads_Interrupt
-			dc.l	40*50, Credits_Init, Credits_Run, Credits_Interrupt
+EffectsTable:		dc.l	16*50, TextLogo_Init, TextLogo_Run, TextLogo_Interrupt
+			dc.l	23*50, TextLogoPart2_Init, TextLogoPart2_Run, TextLogoPart2_Interrupt
+			dc.l	32*50, Quads_Init, Quads_Run, Quads_Interrupt
+			dc.l	90*50, Credits_Init, Credits_Run, Credits_Interrupt
 			dc.l	-1,-1
 EffectsPointer:		dc.l	EffectsTable
 EffectsInitPointer:	dc.l	EffectsTable+4
@@ -198,7 +198,7 @@ Text:			dc.b	'THIS ',2,'IS ',3,'A TEST!',10
 	SECTION ChipData,DATA_C
 *******************************************************************************
 
-TLCopper:
+MainCopper:
 	dc.w	$01fc,$0000
 	dc.w	$008e,$2c81
 	dc.w	$0090,$2cc1
@@ -209,12 +209,16 @@ TLCopper:
 	dc.w	$010a,$0000
 	dc.w	$0102,$0000
 
-TLPalette:
+MainPalette:
 	dc.w	$0180,$0012
 	dc.w	$0182,$0012
+	dc.w	$0184,$0012
+	dc.w	$0186,$0012
 
-TLBplPtrs:
+MainBplPtrs:
 	dc.w	$00e0,$0000,$00e2,$0000
+	dc.w	$00e4,$0000,$00e6,$0000
+MainBplCon:
 	dc.w	$0100,$1200
 
 	dc.w	$ffdf,$fffe
@@ -289,8 +293,8 @@ Module:	incbin	"data/P61.scenic_balls"
 	SECTION ChipBuffers,BSS_C
 *******************************************************************************
 
-Screen:		ds.b	h*bwid
-Screen2:	ds.b	h*bwid
+Screen:		ds.b	h*bwid*5
+Screen2:	ds.b	h*bwid*5
 
 QuadsMask:	ds.b	h*bwid
 

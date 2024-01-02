@@ -27,11 +27,11 @@ TextLogo_Init:
 	lea	Screen,a0
 	; move.l	#(320>>3)*256,d0
         moveq   #0,d0
-	lea	TLBplPtrs+2,a1
+	lea	MainBplPtrs+2,a1
 	moveq	#1-1,d1
 	bsr.w	SetBpls
 
-	move.l	#TLCopper,$80(a6)
+	move.l	#MainCopper,$80(a6)
         rts
 
 ************************************************************
@@ -44,7 +44,7 @@ TextLogo_Run:
 	move.l	a3,a0
 	; move.l	#(320>>3)*256,d0
         moveq   #0,d0
-	lea	TLBplPtrs+2,a1
+	lea	MainBplPtrs+2,a1
 	moveq	#1-1,d1
 	bsr.w	SetBpls
 
@@ -190,7 +190,7 @@ I       SET     I+1
         lea.l   .palette(pc),a0
         move.w  TLColorIndex(pc),d0
         add.w   d0,d0
-        move.w  (a0,d0.w),TLPalette+6
+        move.w  (a0,d0.w),MainPalette+6
 
 .done:  move.l  (sp)+,a6
         rts

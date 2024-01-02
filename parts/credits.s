@@ -9,15 +9,19 @@ Credits_Init:
 	bsr	WaitBlitter
 
 	lea	Screen,a0
-	; move.l	#(320>>3)*256,d0
-        moveq   #0,d0
-	lea	TLBplPtrs+2,a1
-	moveq	#1-1,d1
+	move.l	#(320>>3)*256,d0
+        ; moveq   #0,d0
+	lea	MainBplPtrs+2,a1
+	moveq	#2-1,d1
 	bsr.w	SetBpls
 
-        move.w  #$fff,TLPalette+6
+        move.w  #$fff,MainPalette+2
+        move.w  #$fff,MainPalette+6
+        move.w  #$fff,MainPalette+10
+        move.w  #$fff,MainPalette+14
+        move.w  #$2200,MainBplCon+2
 
-	move.l	#TLCopper,$80(a6)
+	move.l	#MainCopper,$80(a6)
         rts
 
 ************************************************************

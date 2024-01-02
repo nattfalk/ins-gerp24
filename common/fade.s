@@ -60,5 +60,6 @@ Fade:	movem.l	d0-d7/a0-a2,-(sp)
 
 	add.w	#1,FCnt
 .end: 	movem.l	(sp)+,d0-d7/a0-a2
+	move.w	FCnt,d0
 	rts
 FCnt: 	dc.w	0
