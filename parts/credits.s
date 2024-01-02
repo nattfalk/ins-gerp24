@@ -1,10 +1,10 @@
 ************************************************************
 Credits_Init:
 	lea	Screen,a0
-        move.l  #(256<<6)+(320>>4),d0
+        move.l  #(256<<6)+(320>>4)*2,d0
 	bsr.w	BltClr
 	lea	Screen2,a0
-        move.l  #(256<<6)+(320>>4),d0
+        move.l  #(256<<6)+(320>>4)*2,d0
 	bsr.w	BltClr
 	bsr	WaitBlitter
 
@@ -15,11 +15,17 @@ Credits_Init:
 	moveq	#2-1,d1
 	bsr.w	SetBpls
 
+        lea.l   Screen,a0
+        add.l   #(320>>3)*256,a0
+        move.l  a0,Credits_TextScr
+
         move.w  #$fff,MainPalette+2
         move.w  #$fff,MainPalette+6
         move.w  #$fff,MainPalette+10
         move.w  #$fff,MainPalette+14
         move.w  #$2200,MainBplCon+2
+
+        bsr     InitFade
 
 	move.l	#MainCopper,$80(a6)
         rts
@@ -32,15 +38,24 @@ Credits_Run:
 
 	move.l	a3,a0
         moveq   #0,d0
-	lea	TLBplPtrs+2,a1
+	lea	MainBplPtrs+2,a1
 	moveq	#1-1,d1
 	bsr.w	SetBpls
 
 	move.l	a2,a0
         move.l  #(256<<6)+(320>>4),d0
 	bsr	BltClr
-	bsr	WaitBlitter
 
+        lea.l   Credits_FromPalette,a0
+        lea.l   Credits_ToPalette,a1
+        lea.l   MainPalette,a2
+        moveq   #32,d0
+        moveq   #4-1,d1
+        bsr     Fade
+.fadeDone:
+
+	bsr	WaitBlitter
+ 
         lea.l   Credits_CubeAngles(pc),a0
         movem.w (a0)+,d0-d2
         bsr     InitRotate
@@ -129,7 +144,7 @@ Credits_Run:
         movea.l Credits_TextPtr(pc),a0
         lea.l   Font,a1
         movea.l Credits_MorphTargetPtr(pc),a2
-        move.l  DrawBuffer(pc),a3
+        move.l  Credits_TextScr(pc),a3
 .print:
         move.w  (a2)+,d0
         move.w  (a2)+,d1
@@ -240,16 +255,16 @@ Credits_Interrupt:
                         ; 3 = Morph out
 Credits_TimingTable:    dc.w    150,0
                         dc.w    250,1
-                        dc.w    400,2
-                        dc.w    500,3
-                        dc.w    100+500,0
-                        dc.w    200+500,1
-                        dc.w    350+500,2
-                        dc.w    450+500,3
-                        dc.w    100+500+450,0
-                        dc.w    200+500+450,1
-                        dc.w    350+500+450,2
-                        dc.w    450+500+450,3
+                        dc.w    450,2
+                        dc.w    550,3
+                        dc.w    100+550,0
+                        dc.w    200+550,1
+                        dc.w    400+550,2
+                        dc.w    500+550,3
+                        dc.w    100+550+500,0
+                        dc.w    200+550+500,1
+                        dc.w    400+550+500,2
+                        dc.w    500+550+500,3
 Credits_TimingPointer:  dc.l    Credits_TimingTable
 Credits_LocalFrameCounter:
                         dc.w    0
@@ -259,6 +274,7 @@ Credits_Text:           dc.b    'GERP  24'
                         dc.b    ' VEDDER '
                         even
 Credits_TextPtr:        dc.l    Credits_Text
+Credits_TextScr:        dc.l    0
 Credits_CubeCoords:     dc.w    -128,-128,-128
                         dc.w     128,-128,-128
                         dc.w     128, 128,-128
@@ -284,16 +300,20 @@ X                       SET     X+16
 
 X                       SET     168
                         REPT    8
-                        dc.w    X,22
+                        dc.w    X,72
 X                       SET     X+16
                         ENDR
 
 X                       SET     48
                         REPT    8
-                        dc.w    X,216
+                        dc.w    X,146
 X                       SET     X+16
                         ENDR
+
 Credits_MorphTargetPtr: dc.l    Credits_MorphTarget
+
+Credits_FromPalette:    dc.w    $0fff,$0fff,$0fff,$0fff
+Credits_ToPalette:      dc.w    $0045,$0f78,$0fbc,$0fff
 
 Credits_Balls:          dc.b    %00111100,0
                         dc.b    %01111110,0
