@@ -164,9 +164,9 @@ DL_Init:	;addq.w	#2,a6		; A6 = $DFF002 for DrawLine !
 ;.wb:		btst	d2,(a6)
 ;		bne.s	.wb
 		bsr     WaitBlitter
-		move.w	#-1,$44(a6)
-		move.w	#-1,$72(a6)
-		move.w	#$8000,$74(a6)
-		move.w	#40,$60(a6)
-		move.w	#40,$66(a6)
+		move.w	#-1,$dff044
+		move.w	#-1,$dff072
+		move.w	#$8000,$dff074
+		move.w	#40,$dff060
+		move.w	#40,$dff066
 		rts
