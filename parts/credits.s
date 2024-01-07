@@ -19,10 +19,10 @@ Credits_Init:
         add.l   #(320>>3)*256,a0
         move.l  a0,Credits_TextScr
 
-        move.w  #$fff,MainPalette+2
-        move.w  #$fff,MainPalette+6
-        move.w  #$fff,MainPalette+10
-        move.w  #$fff,MainPalette+14
+        move.w  #$0b54,MainPalette+2
+        move.w  #$0b54,MainPalette+6
+        move.w  #$0b54,MainPalette+10
+        move.w  #$0b54,MainPalette+14
         move.w  #$2200,MainBplCon+2
 
         bsr     InitFade
@@ -312,7 +312,7 @@ X                       SET     X+16
 
 Credits_MorphTargetPtr: dc.l    Credits_MorphTarget
 
-Credits_FromPalette:    dc.w    $0fff,$0fff,$0fff,$0fff
+Credits_FromPalette:    dc.w    $0b54,$0b54,$0b54,$0b54
 Credits_ToPalette:      dc.w    $0045,$0f78,$0fbc,$0fff
 
 Credits_Balls:          dc.b    %00111100,0
