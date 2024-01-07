@@ -1,8 +1,8 @@
 	INCLUDE "common/startup.s"
 
 ********** Flags **************
-PLAY_MUSIC = 1
-SHOW_RASTER = 0
+PLAY_MUSIC = 0
+SHOW_RASTER = 1
 
 ********** Constants **********
 w	= 320
@@ -128,33 +128,37 @@ VBint:	movem.l	d0/a0/a6,-(sp)
 	; include	"common/textwriter.s"
 	; include	"common/doteffect.s"
 	include	"common/fade.s"
+	include "common/clippoly.s"
 	include "common/drawline.s"
 	include "common/rotate.s"
+
+	include "common/LightSpeedPlayer_cia.s"
+	include "common/LightSpeedPlayer.s"
 
 	include	"parts/textlogo.s"
 	include	"parts/textlogo_part2.s"
 	include "parts/quads.s"
 	include "parts/credits.s"
-
-	include "common/LightSpeedPlayer_cia.s"
-	include "common/LightSpeedPlayer.s"
+	include "parts/stripe_wall.s"
 
 ********** Fastmem Data **********
 			even
 DrawBuffer:		dc.l	Screen2
 ViewBuffer:		dc.l	Screen
 
-EffectsTable:		dc.l	16*50, TextLogo_Init, TextLogo_Run, TextLogo_Interrupt
-			dc.l	23*50, TextLogoPart2_Init, TextLogoPart2_Run, TextLogoPart2_Interrupt
-			dc.l	32*50, Quads_Init, Quads_Run, Quads_Interrupt
-			dc.l	90*50, Credits_Init, Credits_Run, Credits_Interrupt
+EffectsTable:		
+			; dc.l	16*50, TextLogo_Init, TextLogo_Run, TextLogo_Interrupt
+			; dc.l	23*50, TextLogoPart2_Init, TextLogoPart2_Run, TextLogoPart2_Interrupt
+			; dc.l	28*50, Quads_Init, Quads_Run, Quads_Interrupt
+			; dc.l	90*50, Credits_Init, Credits_Run, Credits_Interrupt
+			dc.l	110*50, StripeWall_Init, StripeWall_Run, StripeWall_Interrupt
 			dc.l	-1,-1
 EffectsPointer:		dc.l	EffectsTable
 EffectsInitPointer:	dc.l	EffectsTable+4
 FrameCounter:		dc.l	0
 
-FromPalette:		dc.w	$000,$000
-ToPalette:		dc.w	$158,$fff
+FromPalette:		dc.w	$000,$000,$000,$000
+ToPalette:		dc.w	$158,$fff,$fff,$158
 
 
 ;		0123456789012345678901234567890123456789
@@ -175,15 +179,16 @@ MainCopper:
 	dc.w	$0092,$0038
 	dc.w	$0094,$00d0
 	dc.w	$0106,$0c00
+	dc.w	$0102,$0000
+	dc.w	$0104,$0000
 	dc.w	$0108,$0000
 	dc.w	$010a,$0000
-	dc.w	$0102,$0000
 
 MainPalette:
-	dc.w	$0180,$0012
-	dc.w	$0182,$0012
-	dc.w	$0184,$0012
-	dc.w	$0186,$0012
+	dc.w	$0180,$0222
+	dc.w	$0182,$0222
+	dc.w	$0184,$0222
+	dc.w	$0186,$0222
 
 MainBplPtrs:
 	dc.w	$00e0,$0000,$00e2,$0000
@@ -194,6 +199,7 @@ MainBplCon:
 	dc.w	$ffdf,$fffe
 	dc.w	$ffff,$fffe
 
+;********************************
 QuadsCopper:
 	dc.w	$01fc,$0000
 	dc.w	$008e,$2c81
@@ -211,15 +217,36 @@ QuadsBplPtrs:
 	dc.w	$0100,$2200
 
 QuadsPalette:
-	dc.w	$0180,$0012
+	dc.w	$0180,$0fff
 	dc.w	$0182,$0fff	; top-left
-	dc.w	$0184,$0012
+	dc.w	$0184,$0fff
 	dc.w	$0186,$0fff	; top-right
 
 	dc.w	$ac01,$fffe
 	dc.w	$0182,$0fff	; bottom-left
-	dc.w	$0184,$0012
+	dc.w	$0184,$0fff
 	dc.w	$0186,$0fff	; bottom-right
+
+	dc.w	$ffff,$fffe
+
+;********************************
+StripeWallCopper:
+	dc.w	$01fc,$0000
+	dc.w	$008e,$2c81
+	dc.w	$0090,$2cc1
+	dc.w	$0092,$0030
+	dc.w	$0094,$00d0
+	dc.w	$0106,$0c00
+	dc.w	$0108,$0000
+	dc.w	$010a,$0000
+	dc.w	$0102,$0000
+	dc.w	$0100,$1200
+
+; StripeWallBplPtrs:
+; StripeWallPalette:
+	dc.w	$0180,$0256
+StripeWallBplPtrs:
+	ds.w	STRIPEWALL_ROWS*STRIPEWALL_ROWSIZE+2
 
 	dc.w	$ffff,$fffe
 
@@ -256,8 +283,9 @@ QuadsPalette:
 ; 	dc.w	$ffff,$fffe
 
 
-Font:	incbin	"data/vedderfont5.8x520.1.raw"
-LSPBank:incbin	"data/scenic balls.v3.lsbank"
+Font:			incbin	"data/vedderfont5.8x520.1.raw"
+LSPBank:		incbin	"data/scenic balls.v3.lsbank"
+StripesPattern:	incbin	"data/stripes_pattern.raw"
 
 	SECTION	VariousData,DATA
 LSPMusic:
