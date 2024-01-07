@@ -17,20 +17,21 @@ TextLogo_Precalc:
 ************************************************************
 TextLogo_Init:
 	lea	Screen,a0
-        move.l  #(256<<6)+(320>>4),d0
+        move.l  #(512<<6)+(320>>4),d0
 	bsr.w	BltClr
 	lea	Screen2,a0
-        move.l  #(256<<6)+(320>>4),d0
+        move.l  #(512<<6)+(320>>4),d0
 	bsr.w	BltClr
 	bsr	WaitBlitter
 
 	lea	Screen,a0
-	; move.l	#(320>>3)*256,d0
-        moveq   #0,d0
+	move.l	#(320>>3)*256,d0
+        ; moveq   #0,d0
 	lea	MainBplPtrs+2,a1
-	moveq	#1-1,d1
+	moveq	#2-1,d1
 	bsr.w	SetBpls
 
+        move.w  #$2200,MainBplCon+2
 	move.l	#MainCopper,$80(a6)
         rts
 
@@ -42,17 +43,87 @@ TextLogo_Run:
 	movem.l	a2-a3,DrawBuffer
 
 	move.l	a3,a0
-	; move.l	#(320>>3)*256,d0
-        moveq   #0,d0
+	move.l	#(320>>3)*256,d0
+        ; moveq   #0,d0
 	lea	MainBplPtrs+2,a1
-	moveq	#1-1,d1
+	moveq	#2-1,d1
 	bsr.w	SetBpls
 
 	move.l	a2,a0
-        move.l  #(256<<6)+(320>>4),d0
+        move.l  #(512<<6)+(320>>4),d0
 	bsr	BltClr
-	bsr	WaitBlitter
+	; bsr	WaitBlitter
 
+
+        moveq   #0,d0
+        moveq   #0,d1
+        move.w  TLBgAngle(pc),d2
+        bsr     InitRotate
+
+        lea.l   TLBgCoords(pc),a0
+        lea.l   TLRotatedCoords(pc),a1
+        moveq   #4-1,d7
+.rotate:movem.w (a0)+,d0-d1
+        moveq   #0,d2
+        bsr     RotatePoint
+        add.w   #320/2,d0
+        move.w  d0,(a1)+
+        add.w   #256/2,d1
+        move.w  d1,(a1)+
+        dbf     d7,.rotate
+
+        lea.l   clip_crds_in,a0
+        lea.l   TLRotatedCoords(pc),a1
+        ; lea.l   TLRotatedCoords2(pc),a1
+        move.w  (a1),16(a0)
+        move.w  2(a1),18(a0)
+        move.l  a0,a3
+        moveq   #4-1,d7
+.setupClip:
+        move.w  (a1),(a0)+
+        move.w  2(a1),(a0)+
+        adda.l  #4,a1
+        dbf     d7,.setupClip
+        move.w  #4,clip_no_in
+        ; move.w  #50,clip_xmin
+        ; move.w  #50,clip_ymin
+        ; move.w  #270,clip_xmax
+        ; move.w  #206,clip_ymax
+        move.w  #16,clip_xmin
+        move.w  #0,clip_ymin
+        move.w  #303,clip_xmax
+        move.w  #255,clip_ymax
+        bsr     clippoly
+
+        bsr     DL_Init
+        lea.l   $dff000,a6
+        lea.l   clip_crds_in,a2
+        move.w  clip_no_in,d7
+        subq.w  #1,d7
+.poly:  
+        movea.l DrawBuffer(pc),a0
+        adda.l  #256*40,a0
+        movem.w (a2)+,d0-d1
+        movem.w (a2),d2-d3
+        moveq   #40,d4
+        bsr     DrawLineFilledPoly
+        dbf     d7,.poly
+
+        ; Fill poly
+        lea.l   $dff000,a6
+        movea.l	DrawBuffer(pc),a0
+        lea.l	((256+256)*40)-2(a0),a0
+        bsr     WaitBlitter
+        move.w	#$09f0,$40(a6)
+        move.w	#$0012,$42(a6)	; Descending and fill
+        move.l	#0,$64(a6)	; Clear A & D modulo
+        move.l	a0,$50(a6)	; Src A
+        move.l	a0,$54(a6)	; Dest (D)
+        move.w	#256<<6+20,$58(a6)	; BltSize
+        ; bsr     WaitBlitter
+
+
+        ; Render text
         move.l  a6,-(sp)
         lea.l   TLText(pc),a0
         lea.l   Sintab,a1
@@ -191,6 +262,7 @@ I       SET     I+1
         move.w  TLColorIndex(pc),d0
         add.w   d0,d0
         move.w  (a0,d0.w),MainPalette+6
+        move.w  (a0,d0.w),MainPalette+10
 
 .done:  move.l  (sp)+,a6
         rts
@@ -199,11 +271,15 @@ I       SET     I+1
 .width:         dc.w    1
 .centerX:       dc.w    0
 .centerY:       dc.w    0
-.palette:       dc.w    $023,$134,$245,$356,$367,$477,$578,$699
-                dc.w    $7aa,$8ab,$9bc,$9cd,$add,$bee,$cff,$dff
+.palette:       ;dc.w    $023,$134,$245,$356,$367,$477,$578,$699
+                ;dc.w    $7aa,$8ab,$9bc,$9cd,$add,$bee,$cff,$dff
+                dc.w    $222,$323,$333,$444,$544,$655,$756,$866
+                dc.w    $877,$977,$a88,$b98,$ca9,$cb9,$dba,$eca
 
 ************************************************************
 TextLogo_Interrupt:
+        add.w   #2,TLBgAngle
+
         add.w   #-8,TLMoveX
         add.w   #12,TLMoveY
         
@@ -235,5 +311,13 @@ TLColorIndex:   dc.w    0
 TLMoveX:        dc.w    0
 TLMoveY:        dc.w    0
 TLCharPositions:ds.w    11*2
+
+TLBgCoords:     dc.w    -500,   0
+                dc.w     500,   0
+                dc.w     500, 500
+                dc.w    -500, 500
+TLBgAngle:      dc.w    -2*16*50+4
+TLRotatedCoords:ds.w    5*2
+
 TLText:         dc.b    'INSANE 2024'   ; 11 chars
                 even

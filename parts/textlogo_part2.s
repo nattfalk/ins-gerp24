@@ -48,7 +48,11 @@ TextLogoPart2_Run:
 .calcNewY:
         move.w  (a0)+,(a1)+
         move.w  (a0)+,d0        ; y
-        move.w  (a2)+,d1
+        cmp.w   #3,d7
+        ble.s   .wave
+        move.w  d0,(a1)+
+        bra     .loopWave
+.wave:  move.w  (a2)+,d1
         and.w   #$7fe,d1
         move.w  (a3,d1.w),d1
         asr.w   #7,d1
@@ -56,6 +60,7 @@ TextLogoPart2_Run:
         asr.w   #8,d1
         add.w   d1,d0
         move.w  d0,(a1)+
+.loopWave:
         dbf     d7,.calcNewY
 
         ; Render text
@@ -109,7 +114,7 @@ I       SET     I+1
         lea.l   TL2ToPalette,a1
         lea.l   MainPalette,a2
         moveq   #50,d0
-        moveq   #2-1,d1
+        moveq   #4-1,d1
         bsr     Fade
 
 .skipFade:
@@ -130,5 +135,5 @@ TL2CharPositions:       ds.w    11*2
 TL2Movements:           dc.w    0,0,0,0,0,0,0,0,0,0,0
 TL2MovementCount:       dc.w    1
 TL2DoFade:              dc.w    0
-TL2FromPalette:         dc.w    $0012,$0dff
-TL2ToPalette:           dc.w    $0fff,$0fff
+TL2FromPalette:         dc.w    $0222,$0eca,$0eca,$0222
+TL2ToPalette:           dc.w    $0fff,$0fff,$0fff,$0fff
