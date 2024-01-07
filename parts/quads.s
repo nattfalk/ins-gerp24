@@ -24,6 +24,8 @@ Quads_Init:
         dbf     d7,.fill2
 
 	move.l	#QuadsCopper,$80(a6)
+
+        clr.w   FCnt
         rts
 
 ************************************************************
@@ -135,6 +137,43 @@ Quads_Run:
         or.w    d1,d0
         lsl.w   #4,d1
         or.w    d1,d0
+
+        tst.w   Quads_FadeAway
+        beq.s   .skipFade
+	move.w	d0,d1
+	and.w	#$0f0,d1
+	eor.w	d1,d0
+	move.w	d0,d2
+	ext.w	d2     ; r
+	lsr.w	#8,d0  ; g
+	lsr.w	#4,d1  ; b
+	move.w	Quads_ToPalette,d3
+	move.w	d3,d4
+	and.w	#$0f0,d4
+	eor.w	d4,d3
+	move.w	d3,d5
+	ext.w	d5
+	lsr.w	#8,d3
+	lsr.w	#4,d4
+	sub.w	d0,d3
+	sub.w	d1,d4
+	sub.w	d2,d5
+	muls.w	Quads_FadeAway,d3
+	muls.w	Quads_FadeAway,d4
+	muls.w	Quads_FadeAway,d5
+        asr.w   #5,d3
+        asr.w   #5,d4
+        asr.w   #5,d5
+	add.w	d0,d3
+	add.w	d1,d4
+	add.w	d2,d5
+	lsl.w	#8,d3
+	lsl.w	#4,d4
+	or.b	d4,d5
+	or.w	d3,d5
+        move.w  d5,d0
+.skipFade:
+
         lea.l   Quads_ColorPtrs,a0
         moveq   #3,d1
         sub.w   d7,d1
@@ -155,8 +194,17 @@ Quads_Run:
         move.l	a0,$50(a6)	; Src A
         move.l	a0,$54(a6)	; Dest (D)
         move.w	#256<<6+20,$58(a6)	; BltSize
-        bsr     WaitBlitter
+        ; bsr     WaitBlitter
 
+        lea.l   Quads_FromPalette,a0
+        lea.l   Quads_ToPalette,a1
+        lea.l   QuadsPalette,a2
+        moveq   #16,d0
+        moveq   #1-1,d1
+        bsr     Fade
+        lea.l   QuadsPalette+2,a0
+        move.w  (a0),8(a0)
+        move.w  (a0),24(a0)
         rts
 
 ************************************************************
@@ -196,6 +244,12 @@ Quads_Interrupt:
         cmp.w   #(50*3)+25,(a1)
         bmi.s   .exit
         add.w   #-4,6(a2)
+
+        cmp.w   #(50*4)+25,(a1)
+        bmi.s   .exit
+        cmp.w   #32,Quads_FadeAway
+        beq.s   .exit
+        add.w   #1,Quads_FadeAway
 .exit:
         movem.l (sp)+,a0-a2
         rts
@@ -219,3 +273,6 @@ Quads_ColorPtrs:        dc.l    QuadsPalette+6
 Quads_Z:                dc.w    0, 0, 0, 0
 Quads_Angles:           dc.w    0, 0, 0, 0
 Quads_FrameCounter:     dc.w    0
+Quads_FromPalette:      dc.w    $0fff
+Quads_ToPalette:        dc.w    $0b54
+Quads_FadeAway:         dc.w    0
