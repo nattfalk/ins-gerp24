@@ -12,6 +12,8 @@
             "emulatorArgs": [
                 "-s",
                 "filesystem=rw,dh0:${workspaceFolder}/uae/dh0",
+                "-r",
+                "C:/projects/private/amiga/roms/kick13.rom"
             ],
             "preLaunchTask": "amigaassembly: build"
         },
