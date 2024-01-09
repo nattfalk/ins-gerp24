@@ -14,10 +14,10 @@ Quads_Init:
         moveq   #0,d0
 	lea	QuadsBplPtrs+10,a1
 	moveq	#1-1,d1
-	bsr.w	SetBpls
+	jsr	SetBpls
 
-        move.l  DrawBuffer(pc),a0
-        move.l  DrawBuffer+4(pc),a1
+        move.l  DrawBuffer,a0
+        move.l  DrawBuffer+4,a1
         move.l  #256*10-1,d7
 .fill2: move.l  #-1,(a0)+
         move.l  #-1,(a1)+
@@ -30,7 +30,7 @@ Quads_Init:
 
 ************************************************************
 Quads_Run:
-	movem.l	DrawBuffer(PC),a2-a3
+	movem.l	DrawBuffer,a2-a3
 	exg	a2,a3
 	movem.l	a2-a3,DrawBuffer
 
@@ -38,14 +38,14 @@ Quads_Run:
         moveq   #0,d0
 	lea	QuadsBplPtrs+2,a1
 	moveq	#1-1,d1
-	bsr.w	SetBpls
+	jsr	SetBpls
 
 	move.l	a2,a0
         move.l  #(256<<6)+(320>>4),d0
-	bsr	BltClr
-	bsr	WaitBlitter
+	jsr	BltClr
+	jsr	WaitBlitter
 
-        bsr     DL_Init
+        jsr     DL_Init
 
         lea.l   Quads_Origins(pc),a2
         lea.l   Quads_Z(pc),a4
@@ -73,7 +73,7 @@ Quads_Run:
         move.w  (a5)+,d0
         move.w  d0,d1
         move.w  d0,d2
-        bsr     InitRotate
+        jsr     InitRotate
 
         lea.l   Quads_Coords(pc),a0
         lea.l   Quads_RotatedCoords(pc),a1
@@ -81,7 +81,7 @@ Quads_Run:
 .rotate:
         ; Rotate
         movem.w (a0)+,d0-d2
-        bsr     RotatePoint
+        jsr     RotatePoint
         ; Project
         move.w  (a4),d4
         add.w   #64,d4
@@ -97,7 +97,7 @@ Quads_Run:
         
         ; Rotate normal
         movem.w (a0)+,d0-d2
-        bsr     RotatePoint
+        jsr     RotatePoint
         asr.w   #1,d2           ; Scale down to 1-15
         and.w   #$7fff,d2       ; Keep only absolute (positive) value
         move.w  d2,Quads_RotatedCoords+20
@@ -108,7 +108,7 @@ Quads_Run:
         move.w  2(a3),18(a3)
         moveq   #4-1,d6
 .lineLoop:
-        move.l  DrawBuffer(pc),a0
+        move.l  DrawBuffer,a0
         move.w  (a3)+,d0
         move.w  (a3)+,d1
         move.w  (a3),d2
@@ -123,7 +123,7 @@ Quads_Run:
         add.w   d4,d3
 
         moveq   #40,d4
-        bsr     DrawLineFilledPoly
+        jsr     DrawLineFilledPoly
 
         dbf     d6,.lineLoop
         addq.l  #4,a2
@@ -185,9 +185,9 @@ Quads_Run:
         dbf     d7,.quadLoop
 
         ; Fill poly
-        movea.l	DrawBuffer(pc),a0
+        movea.l	DrawBuffer,a0
         lea.l	255*40+38(a0),a0
-        bsr     WaitBlitter
+        jsr     WaitBlitter
         move.w	#$09f0,$40(a6)
         move.w	#$0012,$42(a6)	; Descending and fill
         move.l	#0,$64(a6)	; Clear A & D modulo
@@ -201,7 +201,7 @@ Quads_Run:
         lea.l   QuadsPalette,a2
         moveq   #16,d0
         moveq   #1-1,d1
-        bsr     Fade
+        jsr     Fade
         lea.l   QuadsPalette+2,a0
         move.w  (a0),8(a0)
         move.w  (a0),24(a0)
