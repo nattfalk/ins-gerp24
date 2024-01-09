@@ -22,7 +22,7 @@ for y in range(int(steps)):
             col = 0
     width += (bottom_width-top_width)/steps
 im.putdata(pix_data)
-im.save("data/stripes_pattern.png", "PNG")
+im.save("data/graphics/stripes_pattern.png", "PNG")
 
 out_data = bytearray(640*64>>3)
 for i in range(640*64>>3):
@@ -33,5 +33,5 @@ for i in range(640*64>>3):
             bin_val |= 1
     out_data[i] = bin_val
 
-with open("data/stripes_pattern.raw", "wb") as raw_file:
+with open("data/graphics/stripes_pattern.raw", "wb") as raw_file:
     raw_file.write(bytes(out_data))
