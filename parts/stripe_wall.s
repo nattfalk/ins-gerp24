@@ -16,52 +16,29 @@ StripeWall_Init:
         bsr     StripeWall_CreateCopper
         bsr     StripeWall_CreateShadeTable
 
+        lea.l   StripeWallModel_Flat(pc),a0
+        lea.l   StripeWallZPositions(pc),a1
+        move.w  #256-1,d7
+.init:  move.w  (a0)+,(a1)+
+        dbf     d7,.init
+
 	move.l	#StripeWallCopper,$80(a6)
+
         movem.l (sp)+,d0-d7/a0-a6
         rts
 
 ************************************************************
-; Dummy:  dc.w    0
 StripeWall_Run:
         movem.l d0-d7/a0-a6,-(sp)
-	; movem.l	DrawBuffer(PC),a2-a3
-	; exg	a2,a3
-	; movem.l	a2-a3,DrawBuffer
-
-	; move.l	a3,a0
-        ; moveq   #0,d0
-	; lea	MainBplPtrs+2,a1
-	; moveq	#1-1,d1
-	; bsr.w	SetBpls
-
-	; move.l	a2,a0
-        ; move.l  #(256<<6)+(320>>4),d0
-	; bsr	BltClr
-	; bsr	WaitBlitter
-
-;         add.w   #1,Dummy
-;         move.w  Dummy,d0
-;         and.w   #1,d0
-;         beq.s   .render
-;         rts
-; .render:
 
         bsr     StripeWall_RenderWall
 
-        bsr     StripeWall_RotateBars
-        bsr     StripeWall_RenderBars
+        bsr     StripeWall_CalculateMorph
 
-        move.b  $bfec01,d0
-        not.b   d0
-        ror.b   #1,d0
-        cmp.b   #$4c,d0         ; Up key
-        bne.s   .down
-        add.w   #1,StripeWallBarZ
-        bra.s   .done
-.down:  cmp.b   #$4d,d0         ; Down key
-        bne.s   .done
-        sub.w   #1,StripeWallBarZ
-.done:
+        ; bsr     StripeWall_RenderSinewaved
+
+        ; bsr     StripeWall_RotateBars
+        ; bsr     StripeWall_RenderBars
 
         movem.l (sp)+,d0-d7/a0-a6
         rts
@@ -119,7 +96,7 @@ StripeWall_CreateShadeTable:
 
 StripeWall_RenderWall:
         move.w  StripeWallScroll,d4
-        sub.w   #8,StripeWallScroll
+        sub.w   #4,StripeWallScroll
         and.w   #$7fe,d4
         lea.l   Sintab,a0
         move.w  (a0,d4.w),d4
@@ -279,11 +256,10 @@ StripeWall_RenderBars:
         move.l  (a2,d4.w),a4
         move.w  d6,SW_COL02(a4)
         move.w  d6,SW_COL03(a4)
-        move.w	d5,SW_BPL2PTL(a4) ;,d1.w)
+        move.w	d5,SW_BPL2PTL(a4)
         swap	d5
-        move.w	d5,SW_BPL2PTH(a4) ;,d1.w)
+        move.w	d5,SW_BPL2PTH(a4)
 
-        ; ; add.w	#STRIPEWALL_ROWSIZE*2,d1
         addq.w  #1,d1
         add.w	d2,d0
         dbf	d3,.render
@@ -324,15 +300,62 @@ StripeWall_RenderBars:
 
         rts
 
+****************************************
+* Sinewaved wall
+StripeWall_RenderSinewaved:
+        lea.l   Sintab,a0
+        lea.l   StripeWallZPositions(pc),a1
+        move.w  StripeWallWaveMovements,d0
+        move.w  StripeWallWaveMovements+2,d1
+        move.w  #256-1,d7
+.wave:  and.w   #$7fe,d0
+        and.w   #$7fe,d1
+        move.w  (a0,d0.w),d2
+        ext.l   d2
+        move.w  (a0,d1.w),d3
+        ext.l   d3
+        add.l   d3,d2
+        asr.l   #8,d2
+        asr.w   #4,d2
+        add.w   #32,d2
+        move.w  d2,(a1)+
+
+        addq.w  #6,d0
+        add.w   #10,d1
+        dbf     d7,.wave
+        
+        add.w   #8,StripeWallWaveMovements
+        sub.w   #12,StripeWallWaveMovements+2
+        rts
+
+****************************************
+* Morphed wall
+StripeWall_CalculateMorph:
+        cmp.w   #128,StripeWallMorphStep
+        beq.s   .morphDone
+        lea.l   StripeWallModel_Flat(pc),a0
+        lea.l   StripeWallModel_Intake(pc),a1
+        lea.l   StripeWallZPositions(pc),a2
+        move.w  StripeWallMorphStep(pc),d0
+        move.w  #256,d7
+        bsr     Lerp128
+        add.w   #1,StripeWallMorphStep
+.morphDone:
+        rts
+
 ************************************************************
                         even
 StripeWallBplPtrList:   ds.l    STRIPEWALL_ROWS
 StripeWallScroll:       dc.w    0
-StripeWallZPositions:   
-                        ; REPT    256
-                        ; dc.w    31
-                        ; ENDR
-                        REPT    32
+StripeWallMorphStep:    dc.w    0
+StripeWallWaveMovements:
+                        dc.w    0,0
+StripeWallZPositions:   ds.w    256
+
+StripeWallModel_Flat:   REPT    256
+                        dc.w    31
+                        ENDR
+StripeWallModel_Intake: REPT    32
                         dc.w    63
                         ENDR
 Z                       SET     63
@@ -376,7 +399,6 @@ StripeWallBarRotatedCoords:
 StripeWallBarProjectedCoords:
                         ds.w	4*2
 StripeWallBarZ:         dc.w    200
-
 StripeWall_MinY:        dc.w    0
 StripeWall_MaxY:        dc.w    0
 

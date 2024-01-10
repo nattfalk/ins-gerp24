@@ -1,7 +1,7 @@
 	INCLUDE "common/startup.s"
 
 ********** Flags **************
-PLAY_MUSIC = 1
+PLAY_MUSIC = 0
 SHOW_RASTER = 0
 
 ********** Constants **********
@@ -133,12 +133,12 @@ VBint:
 	rte
 
 	; include	"common/textwriter.s"
-	include	"common/doteffect.s"
 	include	"common/fade.s"
 	include "common/clippoly.s"
 	include "common/drawline.s"
 	include "common/rotate.s"
 	include	"common/shadetable.s"
+	include	"common/math.s"
 
 	include "common/LightSpeedPlayer_cia.s"
 	include "common/LightSpeedPlayer.s"
@@ -280,7 +280,7 @@ StripeWallCopper:
 	dc.w	$0108,$0000
 	dc.w	$010a,$0000
 	dc.w	$0102,$0000
-	dc.w	$0100,$2200
+	dc.w	$0100,$1200
 
 ; StripeWallBplPtrs:
 ; StripeWallPalette:
