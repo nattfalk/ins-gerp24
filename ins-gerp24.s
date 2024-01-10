@@ -1,7 +1,7 @@
 	INCLUDE "common/startup.s"
 
 ********** Flags **************
-PLAY_MUSIC = 0
+PLAY_MUSIC = 1
 SHOW_RASTER = 0
 
 ********** Constants **********
@@ -144,7 +144,6 @@ VBint:
 	include "common/LightSpeedPlayer.s"
 
 	include	"parts/textlogo.s"
-	include	"parts/textlogo_part2.s"
 	include "parts/credits.s"
 	include "parts/quads.s"
 	include "parts/stripe_wall.s"
@@ -155,11 +154,10 @@ DrawBuffer:		dc.l	Screen2
 ViewBuffer:		dc.l	Screen
 
 EffectsTable:		
-			; dc.l	16*50, TextLogo_Init, TextLogo_Run, TextLogo_Interrupt
-			; dc.l	23*50, TextLogoPart2_Init, TextLogoPart2_Run, TextLogoPart2_Interrupt
+			dc.l	23*50, TextLogo_Init, TextLogo_Run, TextLogo_Interrupt
 			; dc.l	28*50, Quads_Init, Quads_Run, Quads_Interrupt
 			; dc.l	90*50, Credits_Init, Credits_Run, Credits_Interrupt
-			dc.l	110*50, StripeWall_Init, StripeWall_Run, StripeWall_Interrupt
+			; dc.l	110*50, StripeWall_Init, StripeWall_Run, StripeWall_Interrupt
 			dc.l	-1,-1
 EffectsPointer:		dc.l	EffectsTable
 EffectsInitPointer:	dc.l	EffectsTable+4
