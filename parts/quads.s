@@ -274,5 +274,5 @@ Quads_Z:                dc.w    0, 0, 0, 0
 Quads_Angles:           dc.w    0, 0, 0, 0
 Quads_FrameCounter:     dc.w    0
 Quads_FromPalette:      dc.w    $0fff
-Quads_ToPalette:        dc.w    $0b54
+Quads_ToPalette:        dc.w    $048b
 Quads_FadeAway:         dc.w    0

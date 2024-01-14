@@ -33,6 +33,7 @@ TextLogo_Init:
 
         move.w  #$2200,MainBplCon+2
 	move.l	#MainCopper,$80(a6)
+
         rts
 
 ************************************************************
@@ -61,18 +62,16 @@ TextLogo_Run:
         bra.s   .done
 
 .sineWave:
+        bsr     TextLogo_RenderSinewaveText
         cmp.w   #18*50,TL_LocalFrameCounter
         bge.s   .fadeOut
-        bsr     TextLogo_RenderSinewaveText
         clr.w   FCnt
         bra.s   .done
 
 .fadeOut:
         bsr     TextLogo_FadeOut
 
-.done:  
-        rts
-
+.done:  rts
 
 ************************************************************
 TextLogo_Interrupt:

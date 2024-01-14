@@ -1,5 +1,6 @@
+	include "include/hardware/custom.i"
 	INCLUDE "common/startup.s"
-
+	
 ********** Flags **************
 PLAY_MUSIC = 1
 SHOW_RASTER = 0
@@ -144,6 +145,7 @@ VBint:
 	include "common/LightSpeedPlayer.s"
 
 	include	"parts/textlogo.s"
+	include "parts/logo.s"
 	include "parts/credits.s"
 	include "parts/quads.s"
 	include "parts/stripe_wall.s"
@@ -154,8 +156,9 @@ DrawBuffer:		dc.l	Screen2
 ViewBuffer:		dc.l	Screen
 
 EffectsTable:		
-			dc.l	23*50, TextLogo_Init, TextLogo_Run, TextLogo_Interrupt
-			; dc.l	28*50, Quads_Init, Quads_Run, Quads_Interrupt
+			dc.l	19*50, TextLogo_Init, TextLogo_Run, TextLogo_Interrupt
+			dc.l	28*50, Logo_Init, Logo_Run, Logo_Interrupt
+			dc.l	24*50, Quads_Init, Quads_Run, Quads_Interrupt
 			; dc.l	90*50, Credits_Init, Credits_Run, Credits_Interrupt
 			; dc.l	110*50, StripeWall_Init, StripeWall_Run, StripeWall_Interrupt
 			dc.l	-1,-1
@@ -168,12 +171,11 @@ ToPalette:			dc.w	$158,$fff,$fff,$158
 
 
 ;		0123456789012345678901234567890123456789
-Text:			dc.b	'THIS ',2,'IS ',3,'A TEST!',10
+Text:		dc.b	'THIS ',2,'IS ',3,'A TEST!',10
 			dc.b	1,'LINE 2',5,200,'11!',0
 			even
 
 	include	"include/sintab.i"
-
 
 *******************************************************************************
 	SECTION ChipData,DATA_C
@@ -205,39 +207,45 @@ MainBplCon:
 
 	dc.w	$ffdf,$fffe
 	dc.w	$ffff,$fffe
+	dc.w	$ffff,$fffe
 
-; TL2Copper:
-; 	dc.w	$01fc,$0000
-; 	dc.w	$008e,$2c81
-; 	dc.w	$0090,$2cc1
-; 	dc.w	$0092,$0038
-; 	dc.w	$0094,$00d0
-; 	dc.w	$0106,$0c00
-; 	dc.w	$0108,$0000
-; 	dc.w	$010a,$0000
-; 	dc.w	$0102,$0000
+******************************************************
+LogoCopper:
+	dc.w	$01fc,$0000
+	dc.w	$008e,$2c81
+	dc.w	$0090,$2cc1
+	dc.w	$0092,$0038
+	dc.w	$0094,$00d0
+	dc.w	$0106,$0000
+	dc.w	$0102,$0000
+	dc.w	$0104,$0000
+	dc.w	$0108,$0000
+	dc.w	$010a,$0000
 
-; TL2Palette:
-; 	dc.w	$0180,$0012
-; 	dc.w	$0182,$0dff
+LogoPalette:
+	dc.w	$0180,$0fff,$0182,$0fff,$0184,$0fff,$0186,$0fff
+	dc.w	$0188,$0fff,$018a,$0fff,$018c,$0fff,$018e,$0fff
+	dc.w	$0190,$0fff,$0192,$0fff,$0194,$0fff,$0196,$0fff
+	dc.w	$0198,$0fff,$019a,$0fff,$019c,$0fff,$019e,$0fff
+	dc.w	$01a0,$0fff,$01a2,$0fff,$01a4,$0fff,$01a6,$0fff
+	dc.w	$01a8,$0fff,$01aa,$0fff,$01ac,$0fff,$01ae,$0fff
+	dc.w	$01b0,$0fff,$01b2,$0fff,$01b4,$0fff,$01b6,$0fff
+	dc.w	$01b8,$0fff,$01ba,$0fff,$01bc,$0fff,$01be,$0fff
 
-; TL2BplPtrs:
-; 	dc.w	$ac01,$fffe,$00e0,$0000,$00e2,$0000,$0100,$1200
-	
-; 	; dc.w	$ad01,$fffe,$00e0,$0000,$00e2,$0000
-; 	; dc.w	$ae01,$fffe,$00e0,$0000,$00e2,$0000
-; 	; dc.w	$af01,$fffe,$00e0,$0000,$00e2,$0000
-; 	; dc.w	$b001,$fffe,$00e0,$0000,$00e2,$0000
-; 	; dc.w	$b101,$fffe,$00e0,$0000,$00e2,$0000
-; 	; dc.w	$b201,$fffe,$00e0,$0000,$00e2,$0000
-; 	; dc.w	$b301,$fffe,$00e0,$0000,$00e2,$0000
-; 	; dc.w	$b401,$fffe,$00e0,$0000,$00e2,$0000
-	
-; 	dc.w	$b501,$fffe,$0100,$0200
+LogoBplPtrs:
+	dc.w	$00e0,$0000,$00e2,$0000
+	dc.w	$00e4,$0000,$00e6,$0000
+	dc.w	$00e8,$0000,$00ea,$0000
+	dc.w	$00ec,$0000,$00ee,$0000
+	dc.w	$00f0,$0000,$00f2,$0000
+LogoBplCon:
+	dc.w	$0100,$5200
 
-; 	; dc.w	$ffdf,$fffe
-; 	dc.w	$ffff,$fffe
+	; dc.w	$ffdf,$fffe
+	dc.w	$ffff,$fffe
+	dc.w	$ffff,$fffe
 
+******************************************************
 QuadsCopper:
 	dc.w	$01fc,$0000
 	dc.w	$008e,$2c81
@@ -252,6 +260,9 @@ QuadsCopper:
 QuadsBplPtrs:
 	dc.w	$00e0,$0000,$00e2,$0000
 	dc.w	$00e4,$0000,$00e6,$0000
+	; dc.w	$00e8,$0000,$00ea,$0000
+	; dc.w	$00ec,$0000,$00ee,$0000
+	; dc.w	$00f0,$0000,$00f2,$0000
 	dc.w	$0100,$2200
 
 QuadsPalette:
@@ -265,6 +276,23 @@ QuadsPalette:
 	dc.w	$0184,$0fff
 	dc.w	$0186,$0fff	; bottom-right
 
+	; dc.w	$0180,$0fff,$0182,$0fff,$0184,$0fff,$0186,$0fff
+	; dc.w	$0188,$0fff,$018a,$0fff,$018c,$0fff,$018e,$0fff
+
+	; dc.w	$0190,$0fff,$0192,$0fff,$0194,$0fff,$0196,$0fff
+	; dc.w	$0198,$0fff,$019a,$0fff,$019c,$0fff,$019e,$0fff
+	; dc.w	$01a0,$0fff,$01a2,$0fff,$01a4,$0fff,$01a6,$0fff
+	; dc.w	$01a8,$0fff,$01aa,$0fff,$01ac,$0fff,$01ae,$0fff
+	; dc.w	$01b0,$0fff,$01b2,$0fff,$01b4,$0fff,$01b6,$0fff
+	; dc.w	$01b8,$0fff,$01ba,$0fff,$01bc,$0fff,$01be,$0fff
+
+	; dc.w	$ac01,$fffe
+	; dc.w	$01a0,$0fff,$01a2,$0fff,$01a4,$0fff,$01a6,$0fff
+	; dc.w	$01a8,$0fff,$01aa,$0fff,$01ac,$0fff,$01ae,$0fff
+	; dc.w	$01b0,$0fff,$01b2,$0fff,$01b4,$0fff,$01b6,$0fff
+	; dc.w	$01b8,$0fff,$01ba,$0fff,$01bc,$0fff,$01be,$0fff
+
+	dc.w	$ffff,$fffe
 	dc.w	$ffff,$fffe
 
 
@@ -293,7 +321,12 @@ StripeWallBplPtrs:
 Font:			incbin	"data/graphics/vedderfont5.8x520.1.raw"
 StripesPattern:	incbin	"data/graphics/stripes_pattern.raw"
 Triangle:		incbin	"data/graphics/triangle.raw"
+Logo:			incbin	"data/graphics/logo1_320x256x5.raw"
+LogoPal:		incbin	"data/graphics/logo1_320x256x5.pal"
+CircleMask:		incbin	"data/graphics/circle_mask_16x160x1.raw"
+
 LSPBank:		incbin	"data/music/some silly chip.v2.lsbank"
+
 BlankLine:      dcb.b   40,0
 
 	SECTION	VariousData,DATA
