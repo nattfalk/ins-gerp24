@@ -158,8 +158,8 @@ ViewBuffer:		dc.l	Screen
 EffectsTable:		
 			dc.l	19*50, TextLogo_Init, TextLogo_Run, TextLogo_Interrupt
 			dc.l	28*50, Logo_Init, Logo_Run, Logo_Interrupt
-			dc.l	24*50, Quads_Init, Quads_Run, Quads_Interrupt
-			; dc.l	90*50, Credits_Init, Credits_Run, Credits_Interrupt
+			dc.l	33*50, Quads_Init, Quads_Run, Quads_Interrupt
+			dc.l	90*50, Credits_Init, Credits_Run, Credits_Interrupt
 			; dc.l	110*50, StripeWall_Init, StripeWall_Run, StripeWall_Interrupt
 			dc.l	-1,-1
 EffectsPointer:		dc.l	EffectsTable
@@ -292,6 +292,45 @@ QuadsPalette:
 	; dc.w	$01b0,$0fff,$01b2,$0fff,$01b4,$0fff,$01b6,$0fff
 	; dc.w	$01b8,$0fff,$01ba,$0fff,$01bc,$0fff,$01be,$0fff
 
+	dc.w	$ffff,$fffe
+	dc.w	$ffff,$fffe
+
+CreditsCopper:
+	dc.w	$01fc,$0000
+	dc.w	$008e,$2c81
+	dc.w	$0090,$2cc1
+	dc.w	$0092,$0038
+	dc.w	$0094,$00d0
+	dc.w	$0106,$0c00
+	dc.w	$0102,$0000
+	dc.w	$0104,$0000
+	dc.w	$0108,$0000
+	dc.w	$010a,$0000
+
+CreditsBplPtrs:
+	dc.w	$00e0,$0000,$00e2,$0000
+	dc.w	$00e4,$0000,$00e6,$0000
+CreditsBplCon:
+	dc.w	$0100,$1200
+
+CreditsPalette:
+	dc.w	$0180,$0222
+	dc.w	$0182,$0222
+CreditsPaletteLine1:
+	dc.w	$0184,$0222
+	dc.w	$0186,$0222
+
+	dc.w	$9001,$fffe
+CreditsPaletteLine2:
+	dc.w	$0184,$0fbc
+	dc.w	$0186,$0fff
+
+	dc.w	$b001,$fffe
+CreditsPaletteLine3:
+	dc.w	$0184,$0fbc
+	dc.w	$0186,$0fff
+
+	dc.w	$ffdf,$fffe
 	dc.w	$ffff,$fffe
 	dc.w	$ffff,$fffe
 

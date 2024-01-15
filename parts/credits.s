@@ -1,3 +1,5 @@
+Credits_NumPoints = 32
+
 ************************************************************
 Credits_Init:
 	lea	Screen,a0
@@ -9,9 +11,8 @@ Credits_Init:
 	bsr	WaitBlitter
 
 	lea	Screen,a0
+	lea	CreditsBplPtrs+2,a1
 	move.l	#(320>>3)*256,d0
-        ; moveq   #0,d0
-	lea	MainBplPtrs+2,a1
 	moveq	#2-1,d1
 	bsr.w	SetBpls
 
@@ -19,15 +20,15 @@ Credits_Init:
         add.l   #(320>>3)*256,a0
         move.l  a0,Credits_TextScr
 
-        move.w  #$0b54,MainPalette+2
-        move.w  #$0b54,MainPalette+6
-        move.w  #$0b54,MainPalette+10
-        move.w  #$0b54,MainPalette+14
-        move.w  #$2200,MainBplCon+2
+        move.w  #$048b,CreditsPalette+2
+        move.w  #$048b,CreditsPalette+6
+        move.w  #$048b,CreditsPalette+10
+        move.w  #$048b,CreditsPalette+14
+        move.w  #$2200,CreditsBplCon+2
 
         bsr     InitFade
 
-	move.l	#MainCopper,$80(a6)
+	move.l	#CreditsCopper,$80(a6)
         rts
 
 ************************************************************
@@ -38,7 +39,7 @@ Credits_Run:
 
 	move.l	a3,a0
         moveq   #0,d0
-	lea	MainBplPtrs+2,a1
+	lea	CreditsBplPtrs+2,a1
 	moveq	#1-1,d1
 	bsr.w	SetBpls
 
@@ -46,13 +47,29 @@ Credits_Run:
         move.l  #(256<<6)+(320>>4),d0
 	bsr	BltClr
 
+        tst.b   Credits_FadeIn
+        bne.s   .fadeDone
         lea.l   Credits_FromPalette,a0
         lea.l   Credits_ToPalette,a1
-        lea.l   MainPalette,a2
+        lea.l   CreditsPalette,a2
         moveq   #32,d0
         moveq   #4-1,d1
         bsr     Fade
+        cmp.w   #33,d0
+        bmi.s   .fadeDone
+        st.b    Credits_FadeIn
+        clr.w   FCnt
 .fadeDone:
+
+        tst.b   Credits_FlashText
+        beq.s   .noFlash
+        lea.l   Credits_FlashPaletteFrom,a0
+        lea.l   Credits_FlashPaletteTo,a1
+        move.l  Credits_FlashPalettePtr,a2
+        moveq   #8,d0
+        moveq   #2-1,d1
+        bsr     Fade
+.noFlash:
 
 	bsr	WaitBlitter
  
@@ -66,7 +83,8 @@ Credits_Run:
         movea.l Credits_MorphTargetPtr(pc),a3
         move.l  DrawBuffer(pc),a4
 
-        moveq   #8-1,d7
+        moveq   #0,d4
+        moveq   #Credits_NumPoints-1,d7
 .rotate:movem.w (a0)+,d0-d2
         bsr     RotatePoint
         move.w  d2,d5
@@ -91,15 +109,17 @@ Credits_Run:
 
         move.w  Credits_MorphStep(pc),d6
         beq.s   .calcScreenOffset
-        move.w  (a3)+,d3
+        move.w  (a3),d3
+        add.w   d4,d3
+        addq.w  #2,d4
         sub.w   d0,d3
         muls    d6,d3
-        asr.w   #6,d3
+        asr.w   #5,d3
         add.w   d3,d0
-        move.w  (a3)+,d3
+        move.w  2(a3),d3
         sub.w   d1,d3
         muls    d6,d3
-        asr.w   #6,d3
+        asr.w   #5,d3
         add.w   d3,d1
 
 .calcScreenOffset:
@@ -137,17 +157,22 @@ Credits_Run:
 
         move.w  Credits_PrintText(pc),d7
         beq.s   .done
-        lsr.w   #4,d7
+        lsr.w   #2,d7
+        cmp.w   #8,d7
+        bhi.s   .done
         subq.w  #1,d7
         bmi     .done
 
         movea.l Credits_TextPtr(pc),a0
         lea.l   Font,a1
-        movea.l Credits_MorphTargetPtr(pc),a2
+        movea.l Credits_PositionPtr(pc),a2
         move.l  Credits_TextScr(pc),a3
+        moveq   #0,d3
 .print:
-        move.w  (a2)+,d0
-        move.w  (a2)+,d1
+        move.w  (a2),d0
+        add.w   d3,d0
+        addq.w  #8,d3
+        move.w  2(a2),d1
         asr.w   #3,d0
         mulu    #40,d1
         add.w   d0,d1
@@ -188,10 +213,10 @@ Credits_Interrupt:
 
 .morphIn:
         cmp.w   #1,d1
-        bne     .printText
+        bne.s   .printText
         ; Use 64 for morphing to straight line
-        cmp.w   #72,Credits_MorphStep
-        beq.s   .rotate
+        cmp.w   #40,Credits_MorphStep
+        beq     .rotate
         add.w   #1,Credits_MorphStep
         bra     .rotate
 
@@ -201,11 +226,11 @@ Credits_Interrupt:
         cmp.w   #128,Credits_PrintText
         beq.s   .rotate
         add.w   #1,Credits_PrintText
-        bra     .rotate
+        bra.s   .rotate
 
 .morphOut:
         cmp.w   #3,d1
-        bne.s   .rotate
+        bne.s   .initFlash
         cmp.w   #0,Credits_PrintText
         beq.s   .mo2
         add.l   #8,Credits_TextPtr
@@ -215,7 +240,21 @@ Credits_Interrupt:
         sub.w   #1,Credits_MorphStep
         tst.w   Credits_MorphStep
         bne.s   .rotate
-        add.l   #8*2*2,Credits_MorphTargetPtr
+        addq.l  #4,Credits_MorphTargetPtr
+        addq.l  #4,Credits_PositionPtr
+        bra.s   .rotate
+
+.initFlash: 
+        cmp.w   #4,d1
+        bne.s   .flash
+        clr.b   Credits_FlashText
+        clr.w   FCnt
+        add.l   #6*2,Credits_FlashPalettePtr
+        bra.s   .rotate
+
+.flash: cmp.w   #5,d1
+        bne.s   .rotate
+        move.b  #1,Credits_FlashText
 
 .rotate:
         lea.l   Credits_CubeAngles(pc),a0
@@ -228,7 +267,7 @@ Credits_Interrupt:
         lea.l   Credits_CubePosition(pc),a2
         move.w  Credits_PosMove(pc),d0
         cmp.w   #512,d0
-        bgt     .skipMove
+        bgt.s   .skipMove
         move.w  (a1,d0.w),d1
         lsr.w   #6,d1
         add.w   #200,d1
@@ -253,67 +292,153 @@ Credits_Interrupt:
                         ; 1 = Morph in
                         ; 2 = Print text
                         ; 3 = Morph out
-Credits_TimingTable:    dc.w    150,0
-                        dc.w    250,1
-                        dc.w    450,2
-                        dc.w    550,3
-                        dc.w    100+550,0
-                        dc.w    200+550,1
-                        dc.w    400+550,2
-                        dc.w    500+550,3
-                        dc.w    100+550+500,0
-                        dc.w    200+550+500,1
-                        dc.w    400+550+500,2
-                        dc.w    500+550+500,3
+                        ; 4 = Flash text
+T_OFFS                  = 180
+BEAT                    = 48
+Credits_TimingTable:    dc.w    T_OFFS+(BEAT*0),0
+                        dc.w    T_OFFS+(BEAT*1),1
+                        dc.w    T_OFFS+(BEAT*2),2
+                        dc.w    T_OFFS+(BEAT*3),3
+
+                        dc.w    T_OFFS+(BEAT*4),0
+                        dc.w    T_OFFS+(BEAT*5),1
+                        dc.w    T_OFFS+(BEAT*6),2
+                        dc.w    T_OFFS+(BEAT*7),3
+                        dc.w    T_OFFS+(BEAT*8),0
+                        dc.w    T_OFFS+(BEAT*9),1
+                        dc.w    T_OFFS+(BEAT*10),2
+                        dc.w    T_OFFS+(BEAT*11),3
+                        dc.w    T_OFFS+(BEAT*12),0
+                        dc.w    T_OFFS+(BEAT*13),1
+                        dc.w    T_OFFS+(BEAT*14),2
+                        dc.w    T_OFFS+(BEAT*15),3
+                        dc.w    T_OFFS+(BEAT*16),0
+                        dc.w    T_OFFS+(BEAT*17),1
+                        dc.w    T_OFFS+(BEAT*18),2
+                        dc.w    T_OFFS+(BEAT*19),3
+                        dc.w    T_OFFS+(BEAT*20),0
+                        dc.w    T_OFFS+(BEAT*21),1
+                        dc.w    T_OFFS+(BEAT*22),2
+                        dc.w    T_OFFS+(BEAT*23),3
+                        dc.w    T_OFFS+(BEAT*24),0
+                        dc.w    T_OFFS+(BEAT*25),1
+                        dc.w    T_OFFS+(BEAT*26),2
+                        dc.w    T_OFFS+(BEAT*27),3
+                        dc.w    T_OFFS+(BEAT*28),0
+                        dc.w    T_OFFS+(BEAT*29),1
+                        dc.w    T_OFFS+(BEAT*30),2
+                        dc.w    T_OFFS+(BEAT*31),3
+
+                        dc.w    1749,0
+                        dc.w    1750,4
+                        dc.w    1774,5
+                        dc.w    1775,4
+                        dc.w    1799,5
+                        dc.w    1800,4
+                        dc.w    1824,5
 Credits_TimingPointer:  dc.l    Credits_TimingTable
 Credits_LocalFrameCounter:
                         dc.w    0
 Credits_PrintText:      dc.w    0
-Credits_Text:           dc.b    'GERP  24'
+Credits_Text:
+                        dc.b    'MUSIC   '
+                        dc.b    'COREL   '
+                        dc.b    'MR MYGG '
+                        dc.b    'GRAPHICS'
+                        dc.b    'CODE    '
+                        dc.b    'VEDDER  '
+                        dc.b    'VEDDER  '
                         dc.b    'PROSPECT'
-                        dc.b    ' VEDDER '
                         even
 Credits_TextPtr:        dc.l    Credits_Text
+
+Credits_FadeIn:         dc.b    0,0
+
+;0123456789012345678901234567890123456789
+;****************************************
+;
+;0123456789012345678901234567890123456789
+;    MUSIC       VEDDER       MR MYGG
+;
+;0123456789012345678901234567890123456789
+;          CODE        PROSPECT
+;
+;0123456789012345678901234567890123456789
+;   GRAPHICS      COREL       VEDDER
+CRED_LINE_1             = 28
+CRED_LINE_2             = 118
+CRED_LINE_3             = 204
+Credits_Positions:      dc.w    4*8,CRED_LINE_1
+                        dc.w    29*8,CRED_LINE_3
+                        dc.w    29*8,CRED_LINE_1
+                        dc.w    3*8,CRED_LINE_3
+                        dc.w    10*8,CRED_LINE_2
+                        dc.w    16*8,CRED_LINE_1
+                        dc.w    17*8,CRED_LINE_3
+                        dc.w    22*8,CRED_LINE_2
+Credits_PositionPtr:    dc.l    Credits_Positions
+
 Credits_TextScr:        dc.l    0
-Credits_CubeCoords:     dc.w    -128,-128,-128
-                        dc.w     128,-128,-128
-                        dc.w     128, 128,-128
-                        dc.w    -128, 128,-128
-                        dc.w    -128,-128, 128
-                        dc.w     128,-128, 128
+Credits_CubeCoords:
+                        dc.w     -64,  64, -64
+                        dc.w      64,  64, -64
+                        dc.w      64, -64, -64
                         dc.w     128, 128, 128
+                        dc.w    -128,-128, 128
+                        dc.w     -64,  64, -64
+                        dc.w      64, -64,  64
+                        dc.w     -64,  64,  64
+                        dc.w    -128, 128,-128
+                        dc.w     -64, -64, -64
+                        dc.w     -64, -64, -64
+                        dc.w     -64,  64,  64
                         dc.w    -128, 128, 128
+                        dc.w     -64, -64,  64
+                        dc.w     -64,  64, -64
+                        dc.w     -64, -64,  64
+                        dc.w      64,  64,  64
+                        dc.w      64, -64,  64
+                        dc.w     -64, -64,  64
+                        dc.w     128, 128,-128
+                        dc.w      64, -64, -64
+                        dc.w      64, -64, -64
+                        dc.w      64,  64, -64
+                        dc.w     -64,  64,  64
+                        dc.w    -128,-128,-128
+                        dc.w      64, -64,  64
+                        dc.w      64,  64,  64
+                        dc.w     -64, -64, -64
+                        dc.w     128,-128, 128
+                        dc.w      64,  64, -64
+                        dc.w      64,  64,  64
+                        dc.w     128,-128,-128
+        
 Credits_CubeRotatedCoords:
-                        ds.w    3*8
+                        ds.w    3*Credits_NumPoints
 Credits_CubeAngles:     dc.w    0,0,0
 Credits_CubePosition:   dc.w    0,0,600
 Credits_PosMove:        dc.w    0
 Credits_CubeXCenter:    dc.w    320/2
 Credits_CubeYCenter:    dc.w    256/2
 Credits_MorphStep:      dc.w    0
-Credits_MorphTarget:
-X                       SET     96
-                        REPT    8
-                        dc.w    X,124
-X                       SET     X+16
-                        ENDR
-
-X                       SET     168
-                        REPT    8
-                        dc.w    X,72
-X                       SET     X+16
-                        ENDR
-
-X                       SET     48
-                        REPT    8
-                        dc.w    X,146
-X                       SET     X+16
-                        ENDR
-
+Credits_MorphTarget:    dc.w    48,48
+                        dc.w    200,190
+                        dc.w    200,48
+                        dc.w    48,190
+                        dc.w    70,118
+                        dc.w    120,48
+                        dc.w    120,190
+                        dc.w    162,118
 Credits_MorphTargetPtr: dc.l    Credits_MorphTarget
 
-Credits_FromPalette:    dc.w    $0b54,$0b54,$0b54,$0b54
+Credits_FromPalette:    dc.w    $048b,$048b,$048b,$048b
 Credits_ToPalette:      dc.w    $0045,$0f78,$0fbc,$0fff
+Credits_FlashPaletteFrom:
+                        dc.w    $0fff,$0fff
+Credits_FlashPaletteTo: dc.w    $0045,$0f78
+Credits_FlashPalettePtr:dc.l    CreditsPaletteLine1-(6*2)
+
+Credits_FlashText:      dc.w    0
 
 Credits_Balls:          dc.b    %00111100,0
                         dc.b    %01111110,0
