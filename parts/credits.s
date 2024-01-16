@@ -3,28 +3,43 @@ Credits_NumPoints = 32
 ************************************************************
 Credits_Init:
 	lea	Screen,a0
-        move.l  #(256<<6)+(320>>4)*2,d0
+        move.l  #(256<<6)+(320>>4)*3,d0
 	bsr.w	BltClr
 	lea	Screen2,a0
-        move.l  #(256<<6)+(320>>4)*2,d0
+        move.l  #(256<<6)+(320>>4)*3,d0
 	bsr.w	BltClr
 	bsr	WaitBlitter
 
-	lea	Screen,a0
+        lea.l   Screen,a0
+        adda.l  #(320>>3)*256,a0
+        move.l  a0,Credits_TextScr
+
+	; Balls - bpl 0
+        lea	Screen,a0
 	lea	CreditsBplPtrs+2,a1
-	move.l	#(320>>3)*256,d0
-	moveq	#2-1,d1
+	moveq	#1-1,d1
 	bsr.w	SetBpls
 
-        lea.l   Screen,a0
-        add.l   #(320>>3)*256,a0
-        move.l  a0,Credits_TextScr
+        ; Text shadow - bpl 1
+	move.l  Credits_TextScr,a0
+        adda.l  #40*3,a0
+	lea	CreditsBplPtrs+2+8,a1
+	moveq   #0,d0
+	moveq	#1-1,d1
+	bsr.w	SetBpls
+
+        ; Text - bpl 2
+	move.l  Credits_TextScr,a0
+	lea	CreditsBplPtrs+2+16,a1
+	moveq   #0,d0
+	moveq	#1-1,d1
+	bsr.w	SetBpls
 
         move.w  #$048b,CreditsPalette+2
         move.w  #$048b,CreditsPalette+6
         move.w  #$048b,CreditsPalette+10
         move.w  #$048b,CreditsPalette+14
-        move.w  #$2200,CreditsBplCon+2
+        move.w  #$3200,CreditsBplCon+2
 
         bsr     InitFade
 
@@ -46,6 +61,8 @@ Credits_Run:
 	move.l	a2,a0
         move.l  #(256<<6)+(320>>4),d0
 	bsr	BltClr
+
+        bsr     Credits_MoveShadowLayer
 
         tst.b   Credits_DoExplode
         beq     .noExplode
@@ -116,7 +133,7 @@ Credits_Run:
         lea.l   Credits_ToPalette,a1
         lea.l   CreditsPalette,a2
         moveq   #32,d0
-        moveq   #4-1,d1
+        moveq   #8-1,d1
         bsr     Fade
         cmp.w   #33,d0
         bmi.s   .fadeDone
@@ -130,7 +147,7 @@ Credits_Run:
         lea.l   Credits_FlashPaletteTo,a1
         move.l  Credits_FlashPalettePtr,a2
         moveq   #8,d0
-        moveq   #2-1,d1
+        moveq   #6-1,d1
         bsr     Fade
 .noFlash:
 
@@ -270,6 +287,9 @@ Credits_Interrupt:
         add.w   #1,Credits_LocalFrameCounter
         move.w  Credits_LocalFrameCounter,d0
 
+        add.w   #32,Credits_ShadowMoveX
+        add.w   #24,Credits_ShadowMoveY
+
 .runFx:
         movea.l Credits_TimingPointer(pc),a0
         move.w  (a0)+,d1
@@ -319,7 +339,7 @@ Credits_Interrupt:
         bne.s   .flash
         clr.b   Credits_FlashText
         clr.w   FCnt
-        add.l   #6*2,Credits_FlashPalettePtr
+        add.l   #14*2,Credits_FlashPalettePtr
         bra.s   .rotate
 
 .flash: cmp.w   #5,d1
@@ -360,6 +380,45 @@ Credits_Interrupt:
 
 .exit:
         movem.l (sp)+,d0-d1/a0-a2
+        rts
+
+************************************************************
+
+Credits_MoveShadowLayer:
+        lea.l   Sintab,a0
+
+        move.w  Credits_ShadowMoveX(pc),d0
+        and.w   #$7fe,d0
+        move.w  (a0,d0.w),d0
+        asr.w   #8,d0
+        asr.w   #3,d0
+
+        move.w  Credits_ShadowMoveY(pc),d1
+        and.w   #$7fe,d1
+        move.w  (a0,d1.w),d1
+        asr.w   #8,d1
+        asr.w   #2,d1
+
+        add.w   d0,d1
+        asr.w   #1,d1
+        muls    #40,d1
+
+        add.l   Credits_TextScr(pc),d1
+
+        lea.l   CreditsBplPtrs+10,a0
+
+        cmp.w   #0,d0
+        bge.s   .pos
+        addq.l  #2,d1
+        add.w   #16,d0
+.pos:
+        lsl.b   #4,d0
+        and.b   #$f0,d0
+        move.b  d0,CreditsBplCon1+1
+        move.w  d1,4(a0)
+        swap    d1
+        move.w  d1,(a0)
+
         rts
 
 ************************************************************
@@ -519,14 +578,17 @@ Credits_ExplodeVelocities:
                         dc.w    3,1, -1,3, -3,-6, -4,-1, -3,2, -2,-1, 4,5, -2,-2
 Credits_DoExplode:      dc.b    0,0
 
-Credits_FromPalette:    dc.w    $048b,$048b,$048b,$048b
-Credits_ToPalette:      dc.w    $0045,$0f78,$0fbc,$0fff
+Credits_FromPalette:    dc.w    $048b,$048b,$048b,$048b,$048b,$048b,$048b,$048b
+Credits_ToPalette:      dc.w    $0045,$0f78,$0555,$0555,$0fbc,$0fbc,$0fbc,$0fbc
 Credits_FlashPaletteFrom:
-                        dc.w    $0fff,$0fff
-Credits_FlashPaletteTo: dc.w    $0045,$0f78
-Credits_FlashPalettePtr:dc.l    CreditsPaletteLine1-(6*2)
+                        dc.w    $0fff,$0fff,$0fff,$0fff,$0fff,$0fff
+Credits_FlashPaletteTo: dc.w    $0045,$0f78,$0045,$0f78,$0045,$0f78
+Credits_FlashPalettePtr:dc.l    CreditsPaletteLine1-(14*2)
 
 Credits_FlashText:      dc.w    0
+
+Credits_ShadowMoveX:    dc.w    0
+Credits_ShadowMoveY:    dc.w    0
 
 Credits_Balls:          dc.b    %00111100,0
                         dc.b    %01111110,0
