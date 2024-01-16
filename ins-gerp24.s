@@ -159,7 +159,7 @@ EffectsTable:
 			dc.l	19*50, TextLogo_Init, TextLogo_Run, TextLogo_Interrupt
 			dc.l	28*50, Logo_Init, Logo_Run, Logo_Interrupt
 			dc.l	33*50, Quads_Init, Quads_Run, Quads_Interrupt
-			dc.l	90*50, Credits_Init, Credits_Run, Credits_Interrupt
+			dc.l	71*50, Credits_Init, Credits_Run, Credits_Interrupt
 			; dc.l	110*50, StripeWall_Init, StripeWall_Run, StripeWall_Interrupt
 			dc.l	-1,-1
 EffectsPointer:		dc.l	EffectsTable
@@ -345,7 +345,7 @@ StripeWallCopper:
 	dc.w	$0108,$0000
 	dc.w	$010a,$0000
 	dc.w	$0102,$0000
-	dc.w	$0100,$1200
+	dc.w	$0100,$2200
 
 ; StripeWallBplPtrs:
 ; StripeWallPalette:

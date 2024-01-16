@@ -47,6 +47,69 @@ Credits_Run:
         move.l  #(256<<6)+(320>>4),d0
 	bsr	BltClr
 
+        tst.b   Credits_DoExplode
+        beq     .noExplode
+	
+        bsr	WaitBlitter
+
+        lea.l   Credits_CubeRotatedCoords(pc),a0
+        lea.l   Credits_Balls(pc),a1
+        move.l  DrawBuffer(pc),a3
+        lea.l   Credits_ExplodeVelocities,a4
+        moveq   #Credits_NumPoints-1,d7
+.drawExplode:
+        movem.w (a0),d0-d1/d5
+
+        move.w  (a4)+,d2
+        add.w   d2,(a0)
+        move.w  (a4)+,d2
+        add.w   d2,2(a0)
+        addq.l  #6,a0
+
+        cmp.w   #0,d0
+        bmi.s   .nextBall
+        cmp.w   #0,d1
+        bmi.s   .nextBall
+        cmp.w   #320-8,d0
+        bge     .nextBall
+        cmp.w   #256-8,d1
+        bge     .nextBall
+
+        ; Calculate screen offset
+        move.w  d0,d2
+        lsr.w   #3,d0
+        mulu    #40,d1
+        add.w   d0,d1
+
+        ; Get current ball index
+        asr.w   #5,d5
+        add.w   #4,d5
+        bge     .ok11
+        moveq   #0,d5
+.ok11:  cmp.w   #7,d5
+        ble     .ok22
+        move    #7,d5
+.ok22:  lsl.w   #4,d5
+        lea.l   (a1,d5.w),a2
+
+        ; Render ball
+        moveq   #8-1,d6
+.drawBall1:
+        move.w  (a2)+,d3
+        and.w   #7,d2
+        addq.w  #8,d2
+        ror.w   d2,d3
+        or.b    d3,(a3,d1.l)
+        ror.w   #8,d3
+        or.b    d3,1(a3,d1.l)
+        add.l   #40,d1
+        dbf     d6,.drawBall1
+.nextBall:
+        dbf     d7,.drawExplode
+
+        bra     .done
+
+.noExplode:
         tst.b   Credits_FadeIn
         bne.s   .fadeDone
         lea.l   Credits_FromPalette,a0
@@ -82,13 +145,14 @@ Credits_Run:
         lea.l   Credits_Balls(pc),a2
         movea.l Credits_MorphTargetPtr(pc),a3
         move.l  DrawBuffer(pc),a4
+        lea.l   Credits_CubeRotatedCoords(pc),a5
 
         moveq   #0,d4
         moveq   #Credits_NumPoints-1,d7
 .rotate:movem.w (a0)+,d0-d2
         bsr     RotatePoint
         move.w  d2,d5
-
+        
         ; Add object offset
         add.w   (a1),d0
         add.w   2(a1),d1
@@ -106,6 +170,9 @@ Credits_Run:
         asl.l   #7,d1
         divs    d2,d1
         add.w   Credits_CubeYCenter(pc),d1
+        
+        movem.w d0-d1/d5,(a5)
+        addq.l  #6,a5
 
         move.w  Credits_MorphStep(pc),d6
         beq.s   .calcScreenOffset
@@ -123,6 +190,7 @@ Credits_Run:
         add.w   d3,d1
 
 .calcScreenOffset:
+        move.l  a5,-(sp)
         ; Calculate screen offset
         move.w  d0,d2
         lsr.w   #3,d0
@@ -152,6 +220,8 @@ Credits_Run:
         or.b    d3,1(a4,d1.l)
         add.l   #40,d1
         dbf     d6,.drawBall
+
+        move.l  (sp)+,a5
 
 .next:  dbf     d7,.rotate
 
@@ -224,7 +294,7 @@ Credits_Interrupt:
         cmp.w   #2,d1
         bne.s   .morphOut
         cmp.w   #128,Credits_PrintText
-        beq.s   .rotate
+        beq     .rotate
         add.w   #1,Credits_PrintText
         bra.s   .rotate
 
@@ -253,8 +323,15 @@ Credits_Interrupt:
         bra.s   .rotate
 
 .flash: cmp.w   #5,d1
-        bne.s   .rotate
+        bne.s   .explode
         move.b  #1,Credits_FlashText
+        bra.s   .rotate
+
+.explode:
+        cmp.w   #6,d1
+        bne.s   .rotate
+        move.b  #1,Credits_DoExplode
+        bra.s   .exit
 
 .rotate:
         lea.l   Credits_CubeAngles(pc),a0
@@ -336,6 +413,10 @@ Credits_TimingTable:    dc.w    T_OFFS+(BEAT*0),0
                         dc.w    1799,5
                         dc.w    1800,4
                         dc.w    1824,5
+
+                        dc.w    1900,6
+
+
 Credits_TimingPointer:  dc.l    Credits_TimingTable
 Credits_LocalFrameCounter:
                         dc.w    0
@@ -430,6 +511,13 @@ Credits_MorphTarget:    dc.w    48,48
                         dc.w    120,190
                         dc.w    162,118
 Credits_MorphTargetPtr: dc.l    Credits_MorphTarget
+
+Credits_ExplodeVelocities:
+                        dc.w    -5,-6, -3,-1, -3,2, 0,-4, -4,-3, -3,3, 1,3, -2,0
+                        dc.w    3,5, -2,-4, 0,-2, 2,4, -5,4, 2,-4, -1,-2, -2,-3
+                        dc.w    -2,-2, -6,3, 1,-4, -3,4, 2,5, 2,1, 5,-6, -1,1
+                        dc.w    3,1, -1,3, -3,-6, -4,-1, -3,2, -2,-1, 4,5, -2,-2
+Credits_DoExplode:      dc.b    0,0
 
 Credits_FromPalette:    dc.w    $048b,$048b,$048b,$048b
 Credits_ToPalette:      dc.w    $0045,$0f78,$0fbc,$0fff
