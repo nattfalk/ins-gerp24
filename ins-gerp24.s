@@ -2,7 +2,7 @@
 	INCLUDE "common/startup.s"
 	
 ********** Flags **************
-PLAY_MUSIC = 1
+PLAY_MUSIC = 0
 SHOW_RASTER = 0
 
 ********** Constants **********
@@ -156,11 +156,11 @@ DrawBuffer:		dc.l	Screen2
 ViewBuffer:		dc.l	Screen
 
 EffectsTable:		
-			dc.l	19*50, TextLogo_Init, TextLogo_Run, TextLogo_Interrupt
-			dc.l	28*50, Logo_Init, Logo_Run, Logo_Interrupt
-			dc.l	33*50, Quads_Init, Quads_Run, Quads_Interrupt
-			dc.l	71*50, Credits_Init, Credits_Run, Credits_Interrupt
-			; dc.l	110*50, StripeWall_Init, StripeWall_Run, StripeWall_Interrupt
+			; dc.l	19*50, TextLogo_Init, TextLogo_Run, TextLogo_Interrupt
+			; dc.l	28*50, Logo_Init, Logo_Run, Logo_Interrupt
+			; dc.l	33*50, Quads_Init, Quads_Run, Quads_Interrupt
+			; dc.l	71*50, Credits_Init, Credits_Run, Credits_Interrupt
+			dc.l	80*50, StripeWall_Init, StripeWall_Run, StripeWall_Interrupt
 			dc.l	-1,-1
 EffectsPointer:		dc.l	EffectsTable
 EffectsInitPointer:	dc.l	EffectsTable+4
@@ -302,14 +302,17 @@ CreditsCopper:
 	dc.w	$0092,$0038
 	dc.w	$0094,$00d0
 	dc.w	$0106,$0c00
-	dc.w	$0102,$0000
 	dc.w	$0104,$0000
 	dc.w	$0108,$0000
 	dc.w	$010a,$0000
+	dc.w	$0102
+CreditsBplCon1:
+	dc.w	$00f0
 
 CreditsBplPtrs:
 	dc.w	$00e0,$0000,$00e2,$0000
 	dc.w	$00e4,$0000,$00e6,$0000
+	dc.w	$00e8,$0000,$00ea,$0000
 CreditsBplCon:
 	dc.w	$0100,$1200
 
@@ -317,18 +320,30 @@ CreditsPalette:
 	dc.w	$0180,$0222
 	dc.w	$0182,$0222
 CreditsPaletteLine1:
-	dc.w	$0184,$0222
-	dc.w	$0186,$0222
+	dc.w	$0184,$00f0
+	dc.w	$0186,$00f0
+	dc.w	$0188,$0222
+	dc.w	$018a,$0222
+	dc.w	$018c,$0222
+	dc.w	$018e,$0222
 
 	dc.w	$9001,$fffe
 CreditsPaletteLine2:
-	dc.w	$0184,$0fbc
-	dc.w	$0186,$0fff
+	dc.w	$0184,$0555
+	dc.w	$0186,$0555
+	dc.w	$0188,$0fbc
+	dc.w	$018a,$0fbc
+	dc.w	$018c,$0fbc
+	dc.w	$018e,$0fbc
 
 	dc.w	$b001,$fffe
 CreditsPaletteLine3:
-	dc.w	$0184,$0fbc
-	dc.w	$0186,$0fff
+	dc.w	$0184,$0555
+	dc.w	$0186,$0555
+	dc.w	$0188,$0fbc
+	dc.w	$018a,$0fbc
+	dc.w	$018c,$0fbc
+	dc.w	$018e,$0fbc
 
 	dc.w	$ffdf,$fffe
 	dc.w	$ffff,$fffe
@@ -350,12 +365,19 @@ StripeWallCopper:
 ; StripeWallBplPtrs:
 ; StripeWallPalette:
 	dc.w	$0180,$012
+
+	dc.w	$2c01,$fffe
+StripeWallCop2Loc:
+	dc.w	$0084,$0000,$0086,0000
+	dc.w	$008a,$0001
+
+	dc.w	$ffff,$fffe
+	dc.w	$ffff,$fffe
+
 StripeWallBplPtrs:
 	ds.w	STRIPEWALL_ROWS*STRIPEWALL_ROWSIZE+2
-
-	dc.w	$ffff,$fffe
-	dc.w	$ffff,$fffe
-
+StripeWallBplPtrs2:
+	ds.w	STRIPEWALL_ROWS*STRIPEWALL_ROWSIZE+2
 
 Font:			incbin	"data/graphics/vedderfont5.8x520.1.raw"
 StripesPattern:	incbin	"data/graphics/stripes_pattern.raw"

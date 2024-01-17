@@ -24,6 +24,12 @@ StripeWall_Init:
 
 	move.l	#StripeWallCopper,$80(a6)
 
+        move.l  #StripeWallBplPtrs,d0
+        lea.l   StripeWallCop2Loc,a0
+        move.w  d0,6(a0)
+        swap    d0
+        move.w  d0,2(a0)
+
         movem.l (sp)+,d0-d7/a0-a6
         rts
 
@@ -31,25 +37,70 @@ StripeWall_Init:
 StripeWall_Run:
         movem.l d0-d7/a0-a6,-(sp)
 
+	movem.l	StripeWallBplPtrBuff(PC),a0-a1
+	exg	a0,a1
+	movem.l	a0-a1,StripeWallBplPtrBuff
+
+	movem.l	StripeWallBplPtrListBuff(PC),a0-a1
+	exg	a0,a1
+	movem.l	a0-a1,StripeWallBplPtrListBuff
+
+        move.l  StripeWallBplPtrBuff+4,d0
+        lea.l   StripeWallCop2Loc,a0
+        move.w  d0,6(a0)
+        swap    d0
+        move.w  d0,2(a0)
+
         bsr     StripeWall_RenderWall
 
         bsr     StripeWall_CalculateMorph
 
         ; bsr     StripeWall_RenderSinewaved
 
-        ; bsr     StripeWall_RotateBars
-        ; bsr     StripeWall_RenderBars
+        cmp.w   #128,StripeWallMorphStep
+        bmi.s   .done
+
+
+        bsr     StripeWall_MoveBars
+        bsr     StripeWall_RotateBars
+
+        cmp.l   #300,StripeWall_LocalFrameCounter
+        bge.s   .dualBars
+        bsr     StripeWall_RenderBar1
+        bra.s   .done
+
+.dualBars:
+        move.w  StripeWallBarZ,d0
+        cmp.w   StripeWallBarZ2,d0
+        bmi.s   .switchRender
+
+        bsr     StripeWall_RenderBar1
+        bsr     StripeWall_RenderBar2
+        bra.s   .done
+
+.switchRender:
+        bsr     StripeWall_RenderBar2
+        bsr     StripeWall_RenderBar1
+
+.done:
 
         movem.l (sp)+,d0-d7/a0-a6
         rts
 
 ************************************************************
 StripeWall_Interrupt:
+        addq.l  #1,StripeWall_LocalFrameCounter
+
         add.w	#6,StripeWallBarAngles
 
-        cmp.w   #70,StripeWallBarZ
-        ble.s   .done
-        sub.w   #1,StripeWallBarZ
+        add.w   #22,StripeWallBarZMove
+        add.w   #22,StripeWallBarYMove
+        add.w   #22,StripeWallBarZ2Move
+        add.w   #22,StripeWallBarY2Move
+
+        ; cmp.w   #65,StripeWallBarZ
+        ; ble.s   .done
+        ; sub.w   #1,StripeWallBarZ
 .done:
         rts
 
@@ -78,6 +129,30 @@ StripeWall_CreateCopper:
         move.l  #$ffdffffe,(a0)+
 .notLastRow:
         dbf     d7,.createCopRows
+
+        lea.l   StripeWallBplPtrs2,a0
+        lea.l   StripeWallBplPtrList2(pc),a1
+        move.l  #$2b01fffe,d0
+        move.w  #STRIPEWALL_ROWS-1,d7
+.createCopRows2:
+        add.l   #$01000000,d0
+        move.l  d0,(a0)+
+        move.l  a0,(a1)+
+        move.l  #$010200f0,(a0)+
+        move.l  #$00e00000,(a0)+
+        move.l  #$00e20000,(a0)+
+        move.l  #$00e40000,(a0)+
+        move.l  #$00e60000,(a0)+
+        ; move.l  #$01800000,(a0)+
+        move.l  #$01820000,(a0)+
+        move.l  #$01840fff,(a0)+
+        move.l  #$01860fff,(a0)+
+
+        cmp.l   #$ff01fffe,d0
+        bne.s   .notLastRow2
+        move.l  #$ffdffffe,(a0)+
+.notLastRow2:
+        dbf     d7,.createCopRows2
         rts
 
 StripeWall_CreateShadeTable:
@@ -87,7 +162,14 @@ StripeWall_CreateShadeTable:
         move.w  (a1)+,d1
         move.w  #64,d2
         jsr     CreateShadeTable
+
         lea.l   StripeWallShadeTable2(pc),a0
+        move.w  (a1)+,d0
+        move.w  (a1)+,d1
+        move.w  #64,d2
+        jsr     CreateShadeTable
+
+        lea.l   StripeWallShadeTable3(pc),a0
         move.w  (a1)+,d0
         move.w  (a1)+,d1
         move.w  #64,d2
@@ -103,12 +185,14 @@ StripeWall_RenderWall:
         asr.w   #8,d4
         and.w   #31,d4
 
-        lea.l   StripeWallBplPtrList,a0
+        ; lea.l   StripeWallBplPtrList,a0
+        move.l  StripeWallBplPtrListBuff,a0
         lea.l   StripesPattern,a1
         lea.l   20(a1),a1
         lea.l   StripeWallZPositions(pc),a3
         lea.l   StripeWallMovements(pc),a4
         lea.l   StripeWallShadeTable(pc),a5
+        move.l  #BlankLine,d5
         move.w  #STRIPEWALL_ROWS-1,d7
 .setBpls:
         move.l  (a0)+,a2
@@ -148,11 +232,16 @@ StripeWall_RenderWall:
         and.w   #63,d3
         add.w   d3,d3
         add.w   d3,d0
+        
+        move.w  d5,SW_BPL2PTL(a2)
+        swap    d5
+        move.w  d5,SW_BPL2PTH(a2)
+        swap    d5
 
-        move.w  d0,SW_BPL1PTL(a2) 
+        move.w  d0,SW_BPL1PTL(a2)
         swap    d0
         move.w  d0,SW_BPL1PTH(a2)
-        swap    d0
+        ; swap    d0
 
 .skip:  dbf     d7,.setBpls
         rts
@@ -163,17 +252,19 @@ StripeWall_RotateBars:
         jsr     InitRotate
 
         lea.l 	StripeWallBarCoords(pc),a0
-        lea.l	StripeWallBarRotatedCoords(pc),a1
+        ; lea.l	StripeWallBarRotatedCoords(pc),a1
         lea.l	StripeWallBarProjectedCoords(pc),a2
+        lea.l	StripeWallBarProjectedCoords2(pc),a3
         moveq	#4-1,d7
 .rotate:
         movem.w	(a0)+,d0-d2
         jsr     RotatePoint
 
-        movem.w	d0-d2,(a1)
-        addq.l	#6,a1
+        move.w  d0,d3
+        move.w  d1,d4
+        move.w  d2,d5
 
-        ; add.w	#110,d2
+        ; Bar 1
         add.w   StripeWallBarZ,d2
         ; Project x
         ext.l   d0
@@ -186,17 +277,35 @@ StripeWall_RotateBars:
         divs    d2,d1
 
         add.w 	#320>>1,d0
-        add.w	#256>>1,d1
+        add.w	StripeWallBarY,d1
         move.w 	d0,(a2)+
         move.w	d1,(a2)+
+
+        ; Bar 2
+        add.w   StripeWallBarZ2,d5
+        ; Project x
+        ext.l   d3
+        asl.l   #7,d3
+        divs    d5,d3
+
+        ; Project y
+        ext.l   d4
+        asl.l   #7,d4
+        divs    d5,d4
+
+        add.w 	#320>>1,d3
+        add.w	StripeWallBarY2,d4
+        move.w 	d3,(a3)+
+        move.w	d4,(a3)+
 
         dbf	d7,.rotate
         rts
 
-StripeWall_RenderBars:
+StripeWall_RenderBar1:
         lea.l	StripeWallBarProjectedCoords(pc),a0
         lea.l	StripeWallBarProjectedCoords+4(pc),a1
-        lea.l	StripeWallBplPtrList,a2
+        ; lea.l	StripeWallBplPtrList,a2
+        move.l  StripeWallBplPtrListBuff,a2
         lea.l   Triangle,a3
         lea.l   StripeWallShadeTable2(pc),a5
         moveq	#4-1,d7
@@ -243,10 +352,16 @@ StripeWall_RenderBars:
         lsr.w	#8,d4
         move.w  d4,d6
         ; lsr.w   #1,d6
+        ; sub.w   #$d,d6
         add.w   d6,d6
         move.w  (a5,d6.w),d6
 
-        mulu	#40,d4
+        ; mulu	#40,d4
+        lsl.w   #3,d4
+        move.w  d4,d5
+        lsl.w   #2,d4
+        add.w   d5,d4
+        ext.l   d4
 
         move.l	a3,d5
         add.l	d4,d5
@@ -271,33 +386,126 @@ StripeWall_RenderBars:
 .ok:
         dbf	d7,.draw
 
-        move.l  #BlankLine,d0
-        lea.l   StripeWallBplPtrList(pc),a0
-        move.w  StripeWall_MinY(pc),d7
-        subq.w  #1,d7
-.clear1:
-        move.l  (a0)+,a1
-        move.w  d0,SW_BPL2PTL(a1)
-        swap    d0
-        move.w  d0,SW_BPL2PTH(a1)
-        swap    d0
-        dbf     d7,.clear1
+        rts
 
-        lea.l   StripeWallBplPtrList(pc),a0
-        move.w  StripeWall_MaxY(pc),d6
-        move.w  #256,d7
-        sub.w   d6,d7
-        lsl.w   #2,d6
-        lea.l   (a0,d6.w),a0
-        subq.w  #1,d7
-.clear2:
-        move.l  (a0)+,a1
-        move.w  d0,SW_BPL2PTL(a1)
-        swap    d0
-        move.w  d0,SW_BPL2PTH(a1)
-        swap    d0
-        dbf     d7,.clear2
+StripeWall_RenderBar2:
+        lea.l	StripeWallBarProjectedCoords2(pc),a0
+        lea.l	StripeWallBarProjectedCoords2+4(pc),a1
+        ; lea.l	StripeWallBplPtrList,a2
+        move.l  StripeWallBplPtrListBuff,a2
+        lea.l   Triangle,a3
+        lea.l   StripeWallShadeTable3(pc),a5
+        moveq	#4-1,d7
 
+        move.w  #256,StripeWall_MinY
+        move.w  #0,StripeWall_MaxY
+.draw:
+
+        movem.w	(a0)+,d0-d1
+        movem.w	(a1)+,d2-d3
+
+        cmp.w   StripeWall_MinY,d1
+        bgt.s   .testMinY2
+        move.w  d1,StripeWall_MinY
+.testMinY2:
+        cmp.w   StripeWall_MinY,d3
+        bgt.s   .testMaxY
+        move.w  d3,StripeWall_MinY
+.testMaxY:
+        cmp.w   StripeWall_MaxY,d1
+        bmi.s   .testMaxY2
+        move.w  d1,StripeWall_MaxY
+.testMaxY2:
+        cmp.w   StripeWall_MaxY,d3
+        bmi.s   .testDone
+        move.w  d3,StripeWall_MaxY
+.testDone:
+
+        cmp.w	d1,d3
+        blo	.backside
+
+        sub.w	d1,d3
+        beq.s   .backside
+
+        lsl.w	#7,d0
+        lsl.w	#7,d2
+
+        sub.w	d0,d2
+        ext.l	d2
+        divs.w	d3,d2
+
+.render:
+        move.w	d0,d4
+        lsr.w	#8,d4
+        move.w  d4,d6
+        ; lsr.w   #1,d6
+        ; sub.w   #$d,d6
+        add.w   d6,d6
+        move.w  (a5,d6.w),d6
+
+        ; mulu	#40,d4
+        lsl.w   #3,d4
+        move.w  d4,d5
+        lsl.w   #2,d4
+        add.w   d5,d4
+        ext.l   d4
+
+        move.l	a3,d5
+        add.l	d4,d5
+
+        move.w  d1,d4
+        lsl.w   #2,d4
+        move.l  (a2,d4.w),a4
+        move.w  d6,SW_COL02(a4)
+        move.w  d6,SW_COL03(a4)
+        move.w	d5,SW_BPL2PTL(a4)
+        swap	d5
+        move.w	d5,SW_BPL2PTH(a4)
+
+        addq.w  #1,d1
+        add.w	d2,d0
+        dbf	d3,.render
+
+.backside:
+        cmp.l	#StripeWallBarProjectedCoords2+(4*2*2),a1
+        bne.s	.ok
+        lea.l	StripeWallBarProjectedCoords2(pc),a1
+.ok:
+        dbf	d7,.draw
+        rts
+StripeWall_MoveBars:
+        lea.l   Sintab,a0
+        move.w  StripeWallBarZMove,d0
+        and.w   #$7fe,d0
+        move.w  (a0,d0.w),d0
+        asr.w   #8,d0
+        asr.w   #1,d0
+        add.w   #128,d0
+        move.w  d0,StripeWallBarZ
+
+        move.w  StripeWallBarYMove,d0
+        and.w   #$7fe,d0
+        move.w  (a0,d0.w),d0
+        asr.w   #8,d0
+        asr.w   #2,d0
+        add.w   #256>>1,d0
+        move.w  d0,StripeWallBarY
+
+        move.w  StripeWallBarZ2Move,d0
+        and.w   #$7fe,d0
+        move.w  (a0,d0.w),d0
+        asr.w   #8,d0
+        asr.w   #1,d0
+        add.w   #128,d0
+        move.w  d0,StripeWallBarZ2
+
+        move.w  StripeWallBarY2Move,d0
+        and.w   #$7fe,d0
+        move.w  (a0,d0.w),d0
+        asr.w   #8,d0
+        asr.w   #2,d0
+        add.w   #256>>1,d0
+        move.w  d0,StripeWallBarY2
         rts
 
 ****************************************
@@ -345,7 +553,8 @@ StripeWall_CalculateMorph:
 
 ************************************************************
                         even
-StripeWallBplPtrList:   ds.l    STRIPEWALL_ROWS
+StripeWall_LocalFrameCounter:           dc.l    0
+                        
 StripeWallScroll:       dc.w    0
 StripeWallMorphStep:    dc.w    0
 StripeWallWaveMovements:
@@ -384,9 +593,11 @@ X                       SET     X+3
 
 StripeWallShadeList:    dc.w    $245,$adf
                         dc.w    $afd,$254
+                        dc.w    $fad,$524
                         ; dc.w    $fff,$000
 StripeWallShadeTable:   ds.w    64
-StripeWallShadeTable2:  ds.w    160
+StripeWallShadeTable2:  ds.w    64
+StripeWallShadeTable3:  ds.w    64
 
 ** Horizontal rotating bar
 StripeWallBarAngles:    dc.w	$10e,0,0
@@ -398,8 +609,27 @@ StripeWallBarRotatedCoords:
                         ds.w	4*3
 StripeWallBarProjectedCoords:
                         ds.w	4*2
-StripeWallBarZ:         dc.w    200
+StripeWallBarProjectedCoords2:
+                        ds.w	4*2
+StripeWallBarZ:         dc.w    70; 200
+StripeWallBarZMove:     dc.w    0
+StripeWallBarY:         dc.w    70; 200
+StripeWallBarYMove:     dc.w    $1fe
+StripeWallBarZ2:         dc.w    70; 200
+StripeWallBarZ2Move:     dc.w    $400
+StripeWallBarY2:         dc.w    70; 200
+StripeWallBarY2Move:     dc.w    $1fe+$400
+
+StripeWall_PrevMinY:    dc.w    0
+StripeWall_PrevMaxY:    dc.w    255
 StripeWall_MinY:        dc.w    0
 StripeWall_MaxY:        dc.w    0
+
+StripeWallBplPtrList:   ds.l    STRIPEWALL_ROWS
+StripeWallBplPtrList2:  ds.l    STRIPEWALL_ROWS
+
+StripeWallBplPtrBuff:   dc.l    StripeWallBplPtrs,StripeWallBplPtrs2
+StripeWallBplPtrListBuff:
+                        dc.l    StripeWallBplPtrList,StripeWallBplPtrList2
 
 ************************************************************
