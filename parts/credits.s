@@ -581,7 +581,7 @@ Credits_DoExplode:      dc.b    0,0
 Credits_FromPalette:    dc.w    $048b,$048b,$048b,$048b,$048b,$048b,$048b,$048b
 Credits_ToPalette:      dc.w    $0045,$0f78,$0555,$0555,$0fbc,$0fbc,$0fbc,$0fbc
 Credits_FlashPaletteFrom:
-                        dc.w    $0fff,$0fff,$0fff,$0fff,$0fff,$0fff
+                        dc.w    $0555,$0555,$0fff,$0fff,$0fff,$0fff
 Credits_FlashPaletteTo: dc.w    $0045,$0f78,$0045,$0f78,$0045,$0f78
 Credits_FlashPalettePtr:dc.l    CreditsPaletteLine1-(14*2)
 
