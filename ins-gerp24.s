@@ -140,6 +140,7 @@ VBint:
 	include "common/rotate.s"
 	include	"common/shadetable.s"
 	include	"common/math.s"
+	include	"common/textwriter_line.s"
 
 	include "common/LightSpeedPlayer_cia.s"
 	include "common/LightSpeedPlayer.s"
@@ -160,7 +161,8 @@ EffectsTable:
 			; dc.l	28*50, Logo_Init, Logo_Run, Logo_Interrupt
 			; dc.l	33*50, Quads_Init, Quads_Run, Quads_Interrupt
 			; dc.l	71*50, Credits_Init, Credits_Run, Credits_Interrupt
-			dc.l	80*50, StripeWall_Init, StripeWall_Run, StripeWall_Interrupt
+			; dc.l	90*50, StripeWall_Init, StripeWall_Run, StripeWall_Interrupt
+			dc.l	90*50, EndText_Init, EndText_Run, EndText_Interrupt
 			dc.l	-1,-1
 EffectsPointer:		dc.l	EffectsTable
 EffectsInitPointer:	dc.l	EffectsTable+4
@@ -170,12 +172,9 @@ FromPalette:		dc.w	$000,$000,$000,$000
 ToPalette:			dc.w	$158,$fff,$fff,$158
 
 
-;		0123456789012345678901234567890123456789
-Text:		dc.b	'THIS ',2,'IS ',3,'A TEST!',10
-			dc.b	1,'LINE 2',5,200,'11!',0
-			even
-
 	include	"include/sintab.i"
+
+	include	"parts/endtext.s"
 
 *******************************************************************************
 	SECTION ChipData,DATA_C
