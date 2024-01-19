@@ -53,18 +53,21 @@ StripeWall_Run:
 
         bsr     StripeWall_RenderWall
 
+        cmp.w   #400,StripeWall_LocalFrameCounter
+        bge     .morph
+        bsr     StripeWall_RenderSinewaved
+        bra     .done
+
+.morph:
         bsr     StripeWall_CalculateMorph
 
-        ; bsr     StripeWall_RenderSinewaved
-
-        cmp.w   #128,StripeWallMorphStep
+        cmp.w   #600,StripeWall_LocalFrameCounter
         bmi.s   .done
-
 
         bsr     StripeWall_MoveBars
         bsr     StripeWall_RotateBars
 
-        cmp.l   #300,StripeWall_LocalFrameCounter
+        cmp.w   #800,StripeWall_LocalFrameCounter
         bge.s   .dualBars
         bsr     StripeWall_RenderBar1
         bra.s   .done
@@ -89,7 +92,13 @@ StripeWall_Run:
 
 ************************************************************
 StripeWall_Interrupt:
-        addq.l  #1,StripeWall_LocalFrameCounter
+        addq.w  #1,StripeWall_LocalFrameCounter
+
+        move.w  StripeWall_LocalFrameCounter,d0
+        sub.w   #10,d0
+        divu    #96,d0
+        and.w   #1,d0
+        beq.s   .backwards
 
         add.w	#6,StripeWallBarAngles
 
@@ -97,6 +106,15 @@ StripeWall_Interrupt:
         add.w   #22,StripeWallBarYMove
         add.w   #22,StripeWallBarZ2Move
         add.w   #22,StripeWallBarY2Move
+        bra.s   .done
+
+.backwards:
+        sub.w	#4,StripeWallBarAngles
+
+        sub.w   #16,StripeWallBarZMove
+        sub.w   #16,StripeWallBarYMove
+        sub.w   #16,StripeWallBarZ2Move
+        sub.w   #16,StripeWallBarY2Move
 
         ; cmp.w   #65,StripeWallBarZ
         ; ble.s   .done
@@ -513,6 +531,7 @@ StripeWall_MoveBars:
 StripeWall_RenderSinewaved:
         lea.l   Sintab,a0
         lea.l   StripeWallZPositions(pc),a1
+        lea.l   StripeWallModel_Flat(pc),a2
         move.w  StripeWallWaveMovements,d0
         move.w  StripeWallWaveMovements+2,d1
         move.w  #256-1,d7
@@ -527,8 +546,8 @@ StripeWall_RenderSinewaved:
         asr.w   #4,d2
         add.w   #32,d2
         move.w  d2,(a1)+
-
         addq.w  #6,d0
+        move.w  d2,(a2)+
         add.w   #10,d1
         dbf     d7,.wave
         
@@ -553,7 +572,7 @@ StripeWall_CalculateMorph:
 
 ************************************************************
                         even
-StripeWall_LocalFrameCounter:           dc.l    0
+StripeWall_LocalFrameCounter:           dc.w    0
                         
 StripeWallScroll:       dc.w    0
 StripeWallMorphStep:    dc.w    0
