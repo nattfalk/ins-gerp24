@@ -2,45 +2,73 @@
 
 ************************************************************
 EndText_Init:
-        ; lea     Screen,a0
         move.l  DrawBuffer,a0
-        move.l  #(((256+12)*2)<<6)+(320>>4),d0
+        move.l  #((256*2)<<6)+(320>>4),d0
         jsr     BltClr
-        ; lea     Screen2,a0
-        ; move.l  #(512<<6)+(320>>4),d0
-        ; jsr     BltClr
+        jsr     WaitBlitter
+        
+        move.l  DrawBuffer,a0
+        lea.l   512*40(a0),a0
+        move.l  a0,EndText_TextBuffer
+        move.l  #((512+24)<<6)+(320>>4),d0
+        jsr     BltClr
         jsr     WaitBlitter
 
+        ; Set bpl 0 (background effect)
         move.l  DrawBuffer,a0
-        move.l	#40,d0
+        moveq   #0,d0
         lea     EndTextBplPtrs+2,a1
-        moveq	#2-1,d1
+        moveq   #1-1,d1
         jsr     SetBpls
 
-        
+        ; Set bpl 2 (empty)
+        move.l  DrawBuffer,a0
+        lea.l   256*40(a0),a0
+        moveq   #0,d0
+        lea     EndTextBplPtrs+16+2,a1
+        moveq   #1-1,d1
+        jsr     SetBpls
+
+        ; Set bpl 1 (text bpl 1)
+        move.l  EndText_TextBuffer,a0
+        moveq   #0,d0
+        lea     EndTextBplPtrs+8+2,a1
+        moveq   #1-1,d1
+        jsr     SetBpls
+
+        ; Set bpl 3 (text bpl 2)
+        move.l  EndText_TextBuffer,a0
+        lea.l   40(a0),a0
+        moveq   #0,d0
+        lea     EndTextBplPtrs+24+2,a1
+        moveq   #1-1,d1
+        jsr     SetBpls
 
         bsr     EndText_CreateBplCon1List
 
-        move.w  #$2200,EndTextBplCon+2
         move.l	#EndTextCopper,$80(a6)
-
         rts
 
 ************************************************************
 EndText_Run:
-        ; movem.l DrawBuffer,a2-a3
-        ; exg     a2,a3
-        ; movem.l	a2-a3,DrawBuffer
+        ; Doublebuffer and clear first bpl
+        movem.l DrawBuffer,a2-a3
+        exg     a2,a3
+        movem.l	a2-a3,DrawBuffer
 
-        ; move.l	a3,a0
-        ; move.l	#(320*256)>>3,d0
-        ; lea     EndTextBplPtrs+2,a1
-        ; moveq	#2-1,d1
-        ; jsr     SetBpls
+        move.l	a3,a0
+        moveq   #0,d0
+        lea     EndTextBplPtrs+2,a1
+        moveq	#1-1,d1
+        jsr     SetBpls
 
-        ; move.l	a2,a0
-        ; move.l  #(512<<6)+(320>>4),d0
-        ; jsr     BltClr
+        move.l	a2,a0
+        lea.l   64*40(a0),a0
+        move.l  #(128<<6)+(320>>4),d0
+        jsr     BltClr
+
+        ; Render background effect
+        bsr     EndText_RenderBackgroundEffect
 
         ; Dubbelbuffer copper
 	movem.l	EndText_BplPtrBuff(PC),a0-a1
@@ -57,7 +85,7 @@ EndText_Run:
         swap    d0
         move.w  d0,2(a0)
 
-        ; Print and scroll text
+        ; Print text
         move.w  EndText_LocalFrameCounter,d0
         and.w   #1,d0
         beq     .wave
@@ -68,12 +96,13 @@ EndText_Run:
 
         lea.l   EndText_Text(pc),a0
         lea.l   Font,a1
-        move.l  DrawBuffer,a2
+        move.l  EndText_TextBuffer,a2
         adda.l  #80*256,a2
         jsr     TextWriter_Line
 
 
 .scroll:
+        ; Scroll upwards
         lea.l   $dff000,a6
         jsr	WaitBlitter
 
@@ -81,7 +110,7 @@ EndText_Run:
 	move.l  #-1,bltafwm(a6)
 	move.w  #0,bltamod(a6)
 	move.w  #0,bltdmod(a6)
-	move.l  DrawBuffer,d0
+	move.l  EndText_TextBuffer,d0
 	move.l  d0,bltdpt(a6)
 	add.l   #80,d0
 	move.l  d0,bltapt(a6)
@@ -90,8 +119,7 @@ EndText_Run:
         addq.w  #1,EndText_PrintCounter
 
 .wave:
-        ;**************
-        ; lea.l   EndText_BplCon1List(pc),a0
+        ;Horizontally sinewaved text planes 
         move.l  EndText_BplPtrListBuff(pc),a0
         lea.l   Sintab,a2
         move.w  .scrollOffset(pc),d0
@@ -109,9 +137,7 @@ EndText_Run:
         
         move.w  d4,d1
         and.b   #$f,d1
-        move.b  d1,d2
-        lsl.b   #4,d2
-        or.b    d2,d1
+        lsl.b   #4,d1
         move.b  d1,3(a1)
 
         addq.w  #1,d0
@@ -125,7 +151,6 @@ EndText_Run:
         asr.w   #8,d4
         asr.w   #4,d4
         addq.w  #8,d4
-
 
 .next:  dbf     d7,.setScroll
 
@@ -147,6 +172,38 @@ EndText_Run:
 EndText_Interrupt:
         add.w   #1,EndText_LocalFrameCounter
         add.w   #40,EndText_SinOffset
+
+        addq.w  #6,EndText_Angles
+        add.w   #12,EndText_Angles+2
+        add.w   #10,EndText_Angles+4
+
+        movem.l a0-a2/d0,-(sp)
+        lea.l   Sintab,a0
+        lea.l   EndText_SinMovement(pc),a1
+        lea.l   EndText_Offsets(pc),a2
+
+        ; X movement
+        move.w  (a1),d0
+        add.w   #8,d0
+        and.w   #$7fe,d0
+        move.w  d0,(a1)+
+        move.w  (a0,d0.w),d0
+        asr.w   #8,d0
+        add.w   #320>>1,d0
+        move.w  d0,(a2)+
+
+        ; Y movement
+        move.w  (a1),d0
+        add.w   #20,d0
+        and.w   #$7fe,d0
+        move.w  d0,(a1)
+        move.w  (a0,d0.w),d0
+        asr.w   #8,d0
+        asr.w   #2,d0
+        add.w   #256>>1,d0
+        move.w  d0,(a2)
+
+        movem.l (sp)+,a0-a2/d0
 
 .done:  rts
 
@@ -178,16 +235,94 @@ EndText_CreateBplCon1List:
 
         rts
 
+EndText_RenderBackgroundEffect:
+        lea.l   EndText_Angles(pc),a0
+        movem.w (a0),d0-d2
+        jsr     InitRotate
+
+        lea.l   EndText_RotatedCoords+8*2*2*1-4,a0
+        lea.l   8*2*2(a0),a1
+        moveq   #8*1-1,d7
+.copy:  move.l  (a0),(a1)
+        subq.l  #4,a0
+        subq.l  #4,a1
+        dbf     d7,.copy
+
+        lea.l   EndText_Coords(pc),a0
+        lea.l   EndText_RotatedCoords(pc),a1
+        move.w  EndText_Offsets,d4
+        move.w  EndText_Offsets+2,d5
+        moveq   #8-1,d6
+.rotate:
+        ; Rotate
+        movem.w (a0)+,d0-d2
+        jsr     RotatePoint
+
+        add.w   #140,d2
+        ; Project
+        ext.l   d0
+        asl.l   #7,d0
+        divs    d2,d0
+        add.w   d4,d0
+        move.w  d0,(a1)+
+        ext.l   d1
+        asl.l   #7,d1
+        divs    d2,d1
+        add.w   d5,d1
+        move.w  d1,(a1)+
+        dbf     d6,.rotate
+
+        jsr     DL_Init
+
+        lea.l   $dff000,a6
+        lea.l   EndText_RotatedCoords(pc),a3
+        moveq   #2-1,d6
+.loop:  
+        lea.l   EndText_Indices(pc),a2
+        moveq   #8-1,d7
+.drawLine:
+        move.w  (a2)+,d1
+        move.w  (a3,d1.w),d0
+        move.w  2(a3,d1.w),d1
+        move.w  (a2),d3
+        move.w  (a3,d3.w),d2
+        move.w  2(a3,d3.w),d3
+
+        move.l  DrawBuffer,a0
+        moveq   #40,d4
+        jsr     DrawLine
+
+        dbf     d7,.drawLine
+
+        lea.l   8*2*2(a3),a3
+        dbf     d6,.loop
+        rts
+
 ************************************************************
                                 even
 EndText_LocalFrameCounter:      dc.w    0
 EndText_TextBuffer:             dc.l    0
 EndText_PrintCounter:           dc.w    0
 EndText_SinOffset:              dc.w    0
-EndText_BplCon1List:            ds.l    256
-EndText_BplCon1List2:           ds.l    256
 EndText_BplPtrBuff:             dc.l    EndTextBplCon1,EndTextBplCon12
 EndText_BplPtrListBuff:         dc.l    EndText_BplCon1List,EndText_BplCon1List2
+EndText_BplCon1List:            ds.l    512
+EndText_BplCon1List2:           ds.l    512
+
+EndText_Angles:         dc.w    0,0,0
+EndText_SinMovement:    dc.w    0,0
+EndText_Offsets:        dc.w    160,128
+EndText_Coords:         dc.w    30,-60,0
+                        dc.w    60,-30,0
+                        dc.w    60,30,0
+                        dc.w    30,60,0
+                        dc.w    -30,60,0
+                        dc.w    -60,30,0
+                        dc.w    -60,-30,0
+                        dc.w    -30,-60,0
+EndText_RotatedCoords:  ds.w    8*2*2
+EndText_Indices:        dc.w    0*4,1*4,2*4,3*4,4*4,5*4,6*4,7*4,0*4
+
 
 ;		         0123456789012345678901234567890123456789
 EndText_Text:	dc.b    10
@@ -234,20 +369,34 @@ EndTextCopper:
 	dc.w	$0106,$0c00
 	dc.w	$0102,$0000
 	dc.w	$0104,$0000
-	dc.w	$0108,$0028
+	dc.w	$0108,$0000
 	dc.w	$010a,$0028
 
 EndTextPalette:
 	dc.w	$0180,$0234
-	dc.w	$0182,$0fff
-	dc.w	$0184,$0777
-	dc.w	$0186,$0e25
+	dc.w	$0182,$0456
+	dc.w	$0184,$0fff
+	dc.w	$0186,$0456
+	dc.w	$0188,$0234
+	dc.w	$018a,$0456
+	dc.w	$018c,$0fff
+	dc.w	$018e,$0fff
+        dc.w	$0190,$0777
+	dc.w	$0192,$0777
+	dc.w	$0194,$0e25
+	dc.w	$0196,$0e25
+	dc.w	$0198,$0777
+	dc.w	$019a,$0777
+	dc.w	$019c,$0e25
+	dc.w	$019e,$0e25
 
 EndTextBplPtrs:
 	dc.w	$00e0,$0000,$00e2,$0000
 	dc.w	$00e4,$0000,$00e6,$0000
+	dc.w	$00e8,$0000,$00ea,$0000
+	dc.w	$00ec,$0000,$00ee,$0000
 EndTextBplCon:
-	dc.w	$0100,$2200
+	dc.w	$0100,$4200
 
 	dc.w	$2c01,$fffe
 EndTextCop2Loc:
@@ -257,7 +406,7 @@ EndTextCop2Loc:
 	dc.w	$ffff,$fffe
 	dc.w	$ffff,$fffe
 
-        SECTION EndTextBSSC,BSS_C
+        SECTION EndTextBSS,BSS_C
 
 EndTextBplCon1:         ds.w    256*4+2+4
 EndTextBplCon12:        ds.w    256*4+2+4

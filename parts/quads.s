@@ -10,9 +10,15 @@ Quads_Init:
         dbf     d6,.fill
         dbf     d7,.yloop
 
+        lea.l   WeAreBack,a0
+        lea.l   QuadsBplPtrs+2,a1
+        moveq   #0,d0
+        moveq   #1-1,d1
+        jsr     SetBpls
+
         lea.l   QuadsMask,a0
         moveq   #0,d0
-	lea	QuadsBplPtrs+10,a1
+	lea	QuadsBplPtrs+2+16,a1
 	moveq	#1-1,d1
 	jsr	SetBpls
 
@@ -36,7 +42,7 @@ Quads_Run:
 
 	move.l	a3,a0
         moveq   #0,d0
-	lea	QuadsBplPtrs+2,a1
+	lea	QuadsBplPtrs+8+2,a1
 	moveq	#1-1,d1
 	jsr	SetBpls
 
@@ -45,6 +51,44 @@ Quads_Run:
 	jsr	BltClr
 	jsr	WaitBlitter
 
+        cmp.w   #32,Quads_FadeAway
+        bne.s   .doQuads
+
+        move.w  #$1200,QuadsBplCon+2
+
+        cmp.w   #16,Quads_FlashUp
+        beq.s   .f2
+
+        lea.l   Quads_FromPalette2,a0
+        lea.l   Quads_FromPalette,a1
+        lea.l   QuadsPalette+4,a2
+        move.w  Quads_FlashUp,FCnt
+        moveq   #16,d0
+        moveq   #1-1,d1
+        jsr     Fade
+
+        lea.l   QuadsPalette,a0
+        move.w  6(a0),38(a0)
+
+        bra     .done
+
+.f2:    cmp.w   #16,Quads_FlashDown
+        beq     .done
+
+        lea.l   Quads_FromPalette,a0
+        lea.l   Quads_ToPalette,a1
+        lea.l   QuadsPalette+4,a2
+        move.w  Quads_FlashDown,FCnt
+        moveq   #15,d0
+        moveq   #1-1,d1
+        jsr     Fade
+
+        lea.l   QuadsPalette,a0
+        move.w  6(a0),38(a0)
+
+        bra     .done
+
+.doQuads:
         jsr     DL_Init
 
         lea.l   Quads_Origins(pc),a2
@@ -181,6 +225,7 @@ Quads_Run:
         ext.l   d1
         move.l  (a0,d1.l),a0
         move.w  d0,(a0)
+        move.w  d0,4(a0)
 
         dbf     d7,.quadLoop
 
@@ -203,9 +248,10 @@ Quads_Run:
         moveq   #1-1,d1
         jsr     Fade
         lea.l   QuadsPalette+2,a0
-        move.w  (a0),8(a0)
-        move.w  (a0),24(a0)
-        rts
+        move.w  (a0),16(a0)
+        move.w  (a0),16+32(a0)
+
+.done:  rts
 
 ************************************************************
 Quads_Interrupt:
@@ -218,7 +264,7 @@ Quads_Interrupt:
         add.w   #2,(a0)
 
         cmp.w   #25,(a1)
-        bmi.s   .exit
+        bmi     .exit
         add.w   #4,(a2)
 
         cmp.w   #50,(a1)
@@ -248,8 +294,21 @@ Quads_Interrupt:
         cmp.w   #(50*4)+25,(a1)
         bmi.s   .exit
         cmp.w   #32,Quads_FadeAway
-        beq.s   .exit
+        beq.s   .f2
         add.w   #1,Quads_FadeAway
+.f2:
+        cmp.w   #(50*5)+25,(a1)
+        bmi.s   .exit
+        cmp.w   #16,Quads_FlashUp
+        beq.s   .f3
+        addq.w  #1,Quads_FlashUp
+.f3:
+        cmp.w   #(50*5)+25+16,(a1)
+        bmi.s   .exit
+        cmp.w   #16,Quads_FlashDown
+        beq.s   .exit
+        addq.w  #1,Quads_FlashDown
+
 .exit:
         movem.l (sp)+,a0-a2
         rts
@@ -266,13 +325,24 @@ Quads_Origins:          dc.w    160-80, 128-64
                         dc.w    160+79, 128+63
                         dc.w    160+79, 128-64
                         dc.w    160-80, 128+63
-Quads_ColorPtrs:        dc.l    QuadsPalette+6
-                        dc.l    QuadsPalette+30
-                        dc.l    QuadsPalette+14
-                        dc.l    QuadsPalette+22
+Quads_ColorPtrs:        dc.l    QuadsPalette+10
+                        dc.l    QuadsPalette+58
+                        dc.l    QuadsPalette+26
+                        dc.l    QuadsPalette+42
 Quads_Z:                dc.w    0, 0, 0, 0
 Quads_Angles:           dc.w    0, 0, 0, 0
 Quads_FrameCounter:     dc.w    0
+Quads_FromPalette2:     dc.w    $0678
 Quads_FromPalette:      dc.w    $0fff
-Quads_ToPalette:        dc.w    $048b
+Quads_ToPalette:        dc.w    $0234
 Quads_FadeAway:         dc.w    0
+Quads_FlashUp:          dc.w    0
+Quads_FlashDown:        dc.w    0
+
+; 01010101
+; 00110011
+; 00001111
+
+
+; 0101
+; 0011

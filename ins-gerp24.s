@@ -2,7 +2,7 @@
 	INCLUDE "common/startup.s"
 	
 ********** Flags **************
-PLAY_MUSIC = 0
+PLAY_MUSIC = 1
 SHOW_RASTER = 0
 
 ********** Constants **********
@@ -157,12 +157,12 @@ DrawBuffer:		dc.l	Screen2
 ViewBuffer:		dc.l	Screen
 
 EffectsTable:		
-			; dc.l	19*50, TextLogo_Init, TextLogo_Run, TextLogo_Interrupt
-			; dc.l	28*50, Logo_Init, Logo_Run, Logo_Interrupt
-			; dc.l	33*50, Quads_Init, Quads_Run, Quads_Interrupt
-			; dc.l	71*50, Credits_Init, Credits_Run, Credits_Interrupt
-			; dc.l	90*50, StripeWall_Init, StripeWall_Run, StripeWall_Interrupt
-			dc.l	90*50, EndText_Init, EndText_Run, EndText_Interrupt
+			dc.l	19*50, TextLogo_Init, TextLogo_Run, TextLogo_Interrupt
+			dc.l	28*50, Logo_Init, Logo_Run, Logo_Interrupt
+			dc.l	34*50, Quads_Init, Quads_Run, Quads_Interrupt
+			dc.l	72*50, Credits_Init, Credits_Run, Credits_Interrupt
+			dc.l	100*50, StripeWall_Init, StripeWall_Run, StripeWall_Interrupt
+			dc.l	120*50, EndText_Init, EndText_Run, EndText_Interrupt
 			dc.l	-1,-1
 EffectsPointer:		dc.l	EffectsTable
 EffectsInitPointer:	dc.l	EffectsTable+4
@@ -259,21 +259,31 @@ QuadsCopper:
 QuadsBplPtrs:
 	dc.w	$00e0,$0000,$00e2,$0000
 	dc.w	$00e4,$0000,$00e6,$0000
+	dc.w	$00e8,$0000,$00ea,$0000
 	; dc.w	$00e8,$0000,$00ea,$0000
 	; dc.w	$00ec,$0000,$00ee,$0000
 	; dc.w	$00f0,$0000,$00f2,$0000
-	dc.w	$0100,$2200
+QuadsBplCon:
+	dc.w	$0100,$3200
 
 QuadsPalette:
 	dc.w	$0180,$0fff
-	dc.w	$0182,$0fff	; top-left
+	dc.w	$0182,$0678
 	dc.w	$0184,$0fff
-	dc.w	$0186,$0fff	; top-right
+	dc.w	$0186,$0fff
+	dc.w	$0188,$0fff	; bg
+	dc.w	$018a,$0678
+	dc.w	$018c,$0fff
+	dc.w	$018e,$0fff
 
 	dc.w	$ac01,$fffe
-	dc.w	$0182,$0fff	; bottom-left
+	dc.w	$0182,$0678	; bottom-left
 	dc.w	$0184,$0fff
-	dc.w	$0186,$0fff	; bottom-right
+	dc.w	$0186,$0fff	; bottom-right !!!
+	dc.w	$0188,$0fff
+	dc.w	$018a,$0678	; top-left
+	dc.w	$018c,$0fff
+	dc.w	$018e,$0fff	; top-right
 
 	; dc.w	$0180,$0fff,$0182,$0fff,$0184,$0fff,$0186,$0fff
 	; dc.w	$0188,$0fff,$018a,$0fff,$018c,$0fff,$018e,$0fff
@@ -384,6 +394,7 @@ Triangle:		incbin	"data/graphics/triangle.raw"
 Logo:			incbin	"data/graphics/logo1_320x256x5.raw"
 LogoPal:		incbin	"data/graphics/logo1_320x256x5.pal"
 CircleMask:		incbin	"data/graphics/circle_mask_16x160x1.raw"
+WeAreBack:		incbin	"data/graphics/weareback.raw"
 
 LSPBank:		incbin	"data/music/some silly chip.v2.lsbank"
 
