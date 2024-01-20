@@ -59,6 +59,19 @@
 				"kind": "build",
 				"isDefault": false
 			}
+		},
+		{
+			"label": "compress",
+			"command": "finalize.cmd",
+			"problemMatcher": [],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			}
+		},
+		{
+			"label": "build-final and compress",
+			"dependsOn": [ "amigaassembly: build-final", "compress" ],
+			"problemMatcher": []
 		}
 	]
 }
