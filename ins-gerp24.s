@@ -172,7 +172,6 @@ FrameCounter:		dc.l	0
 FromPalette:		dc.w	$000,$000,$000,$000
 ToPalette:			dc.w	$158,$fff,$fff,$158
 
-
 	include	"include/sintab.i"
 
 	include	"parts/endtext.s"

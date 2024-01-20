@@ -7,6 +7,11 @@ EndText_Init:
         jsr     BltClr
         jsr     WaitBlitter
         
+        move.l  ViewBuffer,a0
+        move.l  #((256*2)<<6)+(320>>4),d0
+        jsr     BltClr
+        jsr     WaitBlitter
+
         move.l  DrawBuffer,a0
         lea.l   512*40(a0),a0
         move.l  a0,EndText_TextBuffer
@@ -85,6 +90,9 @@ EndText_Run:
         swap    d0
         move.w  d0,2(a0)
 
+        cmp.w   #2440,EndText_LocalFrameCounter
+        bge.s   .wave
+        
         ; Print text
         move.w  EndText_LocalFrameCounter,d0
         and.w   #1,d0
@@ -153,6 +161,9 @@ EndText_Run:
         addq.w  #8,d4
 
 .next:  dbf     d7,.setScroll
+
+        cmp.w   #2440,EndText_LocalFrameCounter
+        bge.s   .done
 
         move.w  EndText_LocalFrameCounter,d0
         and.w   #1,d0
@@ -355,7 +366,7 @@ EndText_Text:	dc.b    10
                 dc.b    '                  ****                  ',10
                 dc.b    '                  ****                  ',10
                 dc.b    '                   **                   ',10
-                dc.b    10
+                dc.b    1,10
                 dc.b    10
                 dc.b    10
                 dc.b    10
@@ -364,12 +375,38 @@ EndText_Text:	dc.b    10
                 dc.b    '   FOLLOWING GROUPS AND PEOPLE ...',10
                 dc.b    10
                 dc.b    10
+                ; TODO
+                dc.b    '       ****** GREETINGS  *******',10
+                dc.b    10
+                dc.b    '3LE ',3,'ABYSS ',1,'ACCESSION ',3,'ALCATRAZ ',1,'ANDROMEDA',10 
+                dc.b    3,'APPENDIX ',1,'ARTWAY ',3,'BATMAN GROUP ',1,'BITBENDAZ ',10
+                dc.b    '  ',3,'DHS ',1,'BYTERAPERS ',3,'BOMB ',1,'BOOZE DESIGN ',10
+                dc.b    '  ',3,'BONZAI ',1,'C-LOUS ',3,'DARKLITE ',1,'DEADLINERS ',10
+                dc.b    ' ',3,'DEKADENCE ',1,'DEPTH ',3,'DESIRE ',1,'DREAMDEALERS ',10
+                dc.b    '',3,'EPH ',1,'EQUINOX ',3,'FAIRLIGHT ',1,'FFP ',3,'FOCUS DESIGN ',10
+                dc.b    '  ',1,'F4CG ',3,'GP ',1,'GHOSTOWN ',3,'HAUJOBB ',1,'HEMOROIDS ',10
+                dc.b    ' ',3,'HOAXERS ',1,'HMF ',3,'IMPACT ',1,'ISTARI ',3,'KESO ',1,'LATEX ',10
+                dc.b    '    ',3,'LEMON. ',1,'LOONIES ',3,'MELON ',1,'NAH-KOLOR  ',10
+                dc.b    '',3,'NATURE ',1,'NEW BEAT ',3,'NUKLEUS ',1,'MOODS PLATEAU',10
+                dc.b    '   ',3,'OFFENCE ',1,'ONSLAUGHT ',3,'OXYRON ',1,'PACIF!C  ',10
+                dc.b    '    ',3,'PARADISE ',1,'PHENOMENA ',3,'PLANET JAZZ  ',10
+                dc.b    ' ',1,'POWERLINE ',3,'RAZOR 1911 ',1,'REALITY ',3,'RELAPSE ',10
+                dc.b    '  ',1,'RESISTANCE ',3,'RIFT ',1,'SCARAB ',3,'SCOOPEX ',1,'SMFX ',10
+                dc.b    ' ',3,'SPACEBALLS ',1,'SPECTRALS ',3,'STRUTS ',1,'SUBSPACE',10
+                dc.b    ' ',3,'TBL ',1,'TEK ',3,'THE CHIPERIA PROJECT ',1,'TALENT ',10
+                dc.b    '  ',3,'THE GANG ',1,'TITAN ',3,'TRAKTOR ',1,'TRIAD ',3,'TRSI ',10
+                dc.b    '   ',1,'TULOU ',3,'UNIQUE ',1,'VOID ',3,'WANTED TEAM  ',10
+                dc.b    '       ',1,'UP ROUGH ',3,'Y-CREW ',1,'ZYMOSIS',10
+                dc.b    10
+                dc.b    '     AND EVERYONE AT ',2,'GERP 2024',1,10
+                dc.b    10
+                dc.b    10
                 dc.b    'AND LAST BUT NOT LEAST SOME INOFFICIAL',10
                 dc.b    'HEADS BEHIND THIS PRODUCTION :)',10
                 dc.b    10
                 dc.b    '- ',3,'PRB28 (AT GITHUB)',1,' FOR THE EXCELLENT',10
                 dc.b    '  ',2,'VS CODE ASSEMBLY EXTENSION',1,' USED FOR',10
-                dc.b    '  THIS PROD'
+                dc.b    '  THIS PROD',10
                 dc.b    '- ',3,'PHOTON/SCX',1,' FOR THE SWEET',10
                 dc.b    '  ',2,'STARTUP CODE',1,10
                 dc.b    '- ',3,'BLUEBERRY',1,' FOR THE GREAT ',2,'SHRINKLER',1,10
@@ -379,11 +416,52 @@ EndText_Text:	dc.b    10
                 dc.b    10
                 dc.b    10
                 dc.b    10
+;		         01234567890123456789012345678901234567
+                dc.b    '      GO ',2,'CRAZY',1,' ... GO ',2,'INSANE',1,10
+                dc.b    10
+                dc.b    '      THANK YOU FOR WATCHING',10
+                dc.b    '        SEE YOU SOON AGAIN',10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    2,'  ********************************',10   
+                dc.b    '  ********************************',10
+                dc.b    '  **   ***       ******        ***',10
+                dc.b    '  ********   ***   ***   *********',10
+                dc.b    '  **   ***   ***   ***         ***',10
+                dc.b    '  **   ***   ***   **********   **',10
+                dc.b    '  **   ***   ***   **********   **',10
+                dc.b    '  **   ***   ***   ***   ****   **',10
+                dc.b    '  **   ***   ***   ***   ****   **',10
+                dc.b    '  **   ***   ***   ***         ***',10
+                dc.b    '  ********************************',10
+                dc.b    '  ********************************',1,10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    10
                 dc.b    10
                 dc.b    10
                 dc.b    0
-                ;dc.b	'THIS ',2,'IS ',3,'A TEST!',10
-                ;dc.b	1,'LINE 2',5,200,'11!',0
+
                 even
 
 ************************************************************
