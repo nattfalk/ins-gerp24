@@ -26,6 +26,7 @@ Demo:
 	move.w	#$87c0,$96(a6)
     
 	bsr		TextLogo_Precalc
+	bsr		StripeWall_Precalc
 
 	IFEQ	PLAY_MUSIC-1
 	lea		LSPMusic,a0
@@ -162,7 +163,7 @@ EffectsTable:
 			dc.l	34*50, Quads_Init, Quads_Run, Quads_Interrupt
 			dc.l	72*50, Credits_Init, Credits_Run, Credits_Interrupt
 			dc.l	100*50, StripeWall_Init, StripeWall_Run, StripeWall_Interrupt
-			dc.l	120*50, EndText_Init, EndText_Run, EndText_Interrupt
+			dc.l	160*50, EndText_Init, EndText_Run, EndText_Interrupt
 			dc.l	-1,-1
 EffectsPointer:		dc.l	EffectsTable
 EffectsInitPointer:	dc.l	EffectsTable+4
@@ -226,19 +227,19 @@ LogoPalette:
 	dc.w	$0188,$0fff,$018a,$0fff,$018c,$0fff,$018e,$0fff
 	dc.w	$0190,$0fff,$0192,$0fff,$0194,$0fff,$0196,$0fff
 	dc.w	$0198,$0fff,$019a,$0fff,$019c,$0fff,$019e,$0fff
-	dc.w	$01a0,$0fff,$01a2,$0fff,$01a4,$0fff,$01a6,$0fff
-	dc.w	$01a8,$0fff,$01aa,$0fff,$01ac,$0fff,$01ae,$0fff
-	dc.w	$01b0,$0fff,$01b2,$0fff,$01b4,$0fff,$01b6,$0fff
-	dc.w	$01b8,$0fff,$01ba,$0fff,$01bc,$0fff,$01be,$0fff
+	; dc.w	$01a0,$0fff,$01a2,$0fff,$01a4,$0fff,$01a6,$0fff
+	; dc.w	$01a8,$0fff,$01aa,$0fff,$01ac,$0fff,$01ae,$0fff
+	; dc.w	$01b0,$0fff,$01b2,$0fff,$01b4,$0fff,$01b6,$0fff
+	; dc.w	$01b8,$0fff,$01ba,$0fff,$01bc,$0fff,$01be,$0fff
 
 LogoBplPtrs:
 	dc.w	$00e0,$0000,$00e2,$0000
 	dc.w	$00e4,$0000,$00e6,$0000
 	dc.w	$00e8,$0000,$00ea,$0000
 	dc.w	$00ec,$0000,$00ee,$0000
-	dc.w	$00f0,$0000,$00f2,$0000
+	; dc.w	$00f0,$0000,$00f2,$0000
 LogoBplCon:
-	dc.w	$0100,$5200
+	dc.w	$0100,$4200
 
 	; dc.w	$ffdf,$fffe
 	dc.w	$ffff,$fffe
@@ -336,23 +337,29 @@ CreditsPaletteLine1:
 	dc.w	$018c,$0222
 	dc.w	$018e,$0222
 
-	dc.w	$9001,$fffe
+CreditsPalette2Y:
+	dc.w	$8001,$fffe
+CreditsPaletteBg2:
+	dc.w	$0180,$0222
 CreditsPaletteLine2:
 	dc.w	$0184,$0555
 	dc.w	$0186,$0555
-	dc.w	$0188,$0fbc
-	dc.w	$018a,$0fbc
-	dc.w	$018c,$0fbc
-	dc.w	$018e,$0fbc
+	dc.w	$0188,$0acc
+	dc.w	$018a,$0acc
+	dc.w	$018c,$0acc
+	dc.w	$018e,$0acc
 
-	dc.w	$b001,$fffe
+CreditsPalette3Y:
+	dc.w	$d001,$fffe
+CreditsPaletteBg3:
+	dc.w	$0180,$0222
 CreditsPaletteLine3:
 	dc.w	$0184,$0555
 	dc.w	$0186,$0555
-	dc.w	$0188,$0fbc
-	dc.w	$018a,$0fbc
-	dc.w	$018c,$0fbc
-	dc.w	$018e,$0fbc
+	dc.w	$0188,$0acc
+	dc.w	$018a,$0acc
+	dc.w	$018c,$0acc
+	dc.w	$018e,$0acc
 
 	dc.w	$ffdf,$fffe
 	dc.w	$ffff,$fffe
@@ -391,18 +398,18 @@ StripeWallBplPtrs2:
 Font:			incbin	"data/graphics/vedderfont5.8x520.1.raw"
 StripesPattern:	incbin	"data/graphics/stripes_pattern.raw"
 Triangle:		incbin	"data/graphics/triangle.raw"
-Logo:			incbin	"data/graphics/logo1_320x256x5.raw"
-LogoPal:		incbin	"data/graphics/logo1_320x256x5.pal"
+Logo:			incbin	"data/graphics/logo2.raw"
+LogoPal:		incbin	"data/graphics/logo2.pal"
 CircleMask:		incbin	"data/graphics/circle_mask_16x160x1.raw"
 WeAreBack:		incbin	"data/graphics/weareback.raw"
 
-LSPBank:		incbin	"data/music/some silly chip.v2.lsbank"
+LSPBank:		incbin	"data/music/we are back timefix.lsbank"
 
 BlankLine:      dcb.b   40,0
 
 	SECTION	VariousData,DATA
 LSPMusic:
-	incbin	"data/music/some silly chip.v2.lsmusic"
+	incbin	"data/music/we are back timefix.lsmusic"
 
 *******************************************************************************
 	SECTION ChipBuffers,BSS_C
@@ -414,4 +421,6 @@ Screen2:	ds.b	h*bwid*5
 QuadsMask:	ds.b	h*bwid
 
 TLFont:		ds.w	520*8
+
+; Triangle:	ds.b	320*160/8
 	END

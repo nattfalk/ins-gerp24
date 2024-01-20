@@ -12,7 +12,7 @@ Logo_Init:
 
 	move.l	DrawBuffer,a0
         move.l  #((256<<6)+(320>>4)),d0
-        moveq   #5-1,d7
+        moveq   #4-1,d7
 .clear: jsr	BltClr
         adda.l  #320*256>>3,a0
         dbf     d7,.clear
@@ -22,7 +22,7 @@ Logo_Init:
         move.l  DrawBuffer,a0
         lea     LogoBplPtrs+2,a1
         move.l  #(320*256)>>3,d0
-        moveq	#5-1,d1
+        moveq	#4-1,d1
         jsr     SetBpls
 
     	move.l	#LogoCopper,$80(a6)
@@ -36,7 +36,7 @@ Logo_Run:
         lea.l   LogoPal,a1
         lea.l   LogoPalette,a2
         moveq   #16,d0
-        moveq   #32-1,d1
+        moveq   #16-1,d1
         bsr     Fade
         bra     .done
 
@@ -76,7 +76,7 @@ Logo_Run:
         lea.l   Logo_WhitePal,a1
         lea.l   LogoPalette,a2
         moveq   #16,d0
-        moveq   #32-1,d1
+        moveq   #16-1,d1
         bsr     Fade
 
 .done:
@@ -125,7 +125,7 @@ Logo_BltCopyBlock:
 	move.w	#$0dc0,bltcon0(a6)
 	move.w	#0,bltcon1(a6)
 
-        moveq   #5-1,d7
+        moveq   #4-1,d7
 .copy:  WAITBLIT
 	move.l	a0,bltapt(a6)
 	move.l	a1,bltbpt(a6)
@@ -143,6 +143,6 @@ Logo_BltCopyBlock:
 
 Logo_LocalFrameCounter:         dc.w    0
 Logo_MaskIndex:                 dc.w    0
-Logo_WhitePal:                  dcb.w   32,$0fff
+Logo_WhitePal:                  dcb.w   16,$0fff
         
         include "data/image_reveal_pattern.s"

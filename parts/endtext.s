@@ -326,19 +326,22 @@ EndText_Indices:        dc.w    0*4,1*4,2*4,3*4,4*4,5*4,6*4,7*4,0*4
 
 ;		         0123456789012345678901234567890123456789
 EndText_Text:	dc.b    10
-                dc.b    '01234567890123456789012345678901234567',10
                 dc.b    '  AND NOW YOU HAVE REACHED THE ',3,'END',1,' ...  ',10
+                dc.b    10
+;		         01234567890123456789012345678901234567
+                dc.b    '            WE ARE ',3,'INSANE',1,10
+                dc.b    10
                 dc.b    10
 ;		         0123456789012345678901234567890123456789
                 dc.b    '   ',2,'GRAPHICS / FONT',1,'   COREL ',3,',',1,' VEDDER     ',10
                 dc.b    10
-                dc.b    '   ',2,'MUSIC',1,'             MR MYGG ',3,',',1,' VEDDER   ',10
+                dc.b    '   ',2,'MUSIC',1,'             MYGG ',3,',',1,' VEDDER   ',10
                 dc.b    10
                 dc.b    '   ',2,'CODE',1,'              PROSPECT           ',10
                 dc.b    10
                 dc.b    10
                 dc.b    10
-;		         0123456789012345678901234567890123456789
+;		         01234567890123456789012345678901234567
                 dc.b    3,'              ***      ***              ',10
                 dc.b    '            *******  *******            ',10
                 dc.b    '           ******************           ',10
@@ -352,6 +355,32 @@ EndText_Text:	dc.b    10
                 dc.b    '                  ****                  ',10
                 dc.b    '                  ****                  ',10
                 dc.b    '                   **                   ',10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+;		         01234567890123456789012345678901234567
+                dc.b    '  THE USUAL GREETINGS GO OUT TO THE',10
+                dc.b    '   FOLLOWING GROUPS AND PEOPLE ...',10
+                dc.b    10
+                dc.b    10
+                dc.b    'AND LAST BUT NOT LEAST SOME INOFFICIAL',10
+                dc.b    'HEADS BEHIND THIS PRODUCTION :)',10
+                dc.b    10
+                dc.b    '- ',3,'PRB28 (AT GITHUB)',1,' FOR THE EXCELLENT',10
+                dc.b    '  ',2,'VS CODE ASSEMBLY EXTENSION',1,' USED FOR',10
+                dc.b    '  THIS PROD'
+                dc.b    '- ',3,'PHOTON/SCX',1,' FOR THE SWEET',10
+                dc.b    '  ',2,'STARTUP CODE',1,10
+                dc.b    '- ',3,'BLUEBERRY',1,' FOR THE GREAT ',2,'SHRINKLER',1,10
+                dc.b    '- ',3,'LEONARD/OXYGEN',1,' FOR THE AMAZING',10
+                dc.b    '  CONVERTER AND ',2,'LIGHTSPEEDPLAYER',1,10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    10
+                dc.b    10
                 dc.b    0
                 ;dc.b	'THIS ',2,'IS ',3,'A TEST!',10
                 ;dc.b	1,'LINE 2',5,200,'11!',0

@@ -11,6 +11,28 @@ SW_COL02                = 26
 SW_COL03                = 30
 
 ************************************************************
+StripeWall_Precalc:
+;         lea.l   Triangle,a0
+;         move.w  #160-1,d7
+; .yloop:
+;         move.w  #320-1,d6
+;         moveq   #0,d0
+; .xloop:
+;         move.b  d0,d1
+;         move.w  d0,d2
+;         and.b   #7,d1
+;         neg.b   d1
+;         add.b   #7,d1
+;         lsr.w   #3,d2
+;         bset    d1,(a0,d2.w)
+
+;         addq.w  #1,d0
+;         dbf     d6,.xloop
+;         lea.l   40(a0),a0
+;         dbf     d7,.yloop
+        rts
+
+************************************************************
 StripeWall_Init:
         movem.l d0-d7/a0-a6,-(sp)
         bsr     StripeWall_CreateCopper
@@ -53,6 +75,8 @@ StripeWall_Run:
 
         bsr     StripeWall_RenderWall
 
+        cmp.w   #1300,StripeWall_LocalFrameCounter
+        bge.s   .done
         cmp.w   #400,StripeWall_LocalFrameCounter
         bge     .morph
         bsr     StripeWall_RenderSinewaved
@@ -89,11 +113,47 @@ StripeWall_Run:
 
         movem.l (sp)+,d0-d7/a0-a6
         rts
-
+        
+        even
+StripeWallBounceShift:
+        dc.w    0
 ************************************************************
 StripeWall_Interrupt:
         addq.w  #1,StripeWall_LocalFrameCounter
 
+        movem.l d0-d1/a0,-(sp)
+
+        cmp.w   #1300,StripeWall_LocalFrameCounter
+        bmi.b   .notYetOut
+        cmp.w   #0,StripeWallRowsCount
+        beq.s   .default
+        sub.w   #4,StripeWallRowsCount
+        bra.s   .default
+
+.notYetOut:
+        cmp.w   #6,StripeWallBounceShift
+        bne.s   .bounce
+        move.w  #256,StripeWallRowsCount
+        bra.s   .default
+
+.bounce:
+        lea.l   Sintab,a0
+        add.w   #16,StripeWallBounce
+        move.w  StripeWallBounce,d0
+        and.w   #$3fe,d0
+        cmp.w   #0,d0
+        bne.b   .calc
+        addq.w  #2,StripeWallBounceShift
+.calc:
+        move.w  (a0,d0.w),d0
+        move.w  StripeWallBounceShift,d1
+        asr.w   #7,d0
+        asr.w   d1,d0
+        move.w  #256,d1
+        sub.w   d0,d1
+        move.w  d1,StripeWallRowsCount
+
+.default:
         move.w  StripeWall_LocalFrameCounter,d0
         sub.w   #10,d0
         divu    #96,d0
@@ -120,12 +180,16 @@ StripeWall_Interrupt:
         ; ble.s   .done
         ; sub.w   #1,StripeWallBarZ
 .done:
+        movem.l (sp)+,d0-d1/a0
         rts
 
 ************************************************************
 StripeWall_CreateCopper:
         lea.l   StripeWallBplPtrs,a0
         lea.l   StripeWallBplPtrList(pc),a1
+        move.l  #BlankLine,d1
+        move.l  d1,d2
+        swap    d2
         move.l  #$2b01fffe,d0
         move.w  #STRIPEWALL_ROWS-1,d7
 .createCopRows:
@@ -133,10 +197,14 @@ StripeWall_CreateCopper:
         move.l  d0,(a0)+
         move.l  a0,(a1)+
         move.l  #$010200f0,(a0)+
-        move.l  #$00e00000,(a0)+
-        move.l  #$00e20000,(a0)+
-        move.l  #$00e40000,(a0)+
-        move.l  #$00e60000,(a0)+
+        move.w  #$00e0,(a0)+
+        move.w  d2,(a0)+
+        move.w  #$00e2,(a0)+
+        move.w  d1,(a0)+
+        move.w  #$00e4,(a0)+
+        move.w  d2,(a0)+
+        move.w  #$00e6,(a0)+
+        move.w  d1,(a0)+
         ; move.l  #$01800000,(a0)+
         move.l  #$01820000,(a0)+
         move.l  #$01840fff,(a0)+
@@ -157,10 +225,14 @@ StripeWall_CreateCopper:
         move.l  d0,(a0)+
         move.l  a0,(a1)+
         move.l  #$010200f0,(a0)+
-        move.l  #$00e00000,(a0)+
-        move.l  #$00e20000,(a0)+
-        move.l  #$00e40000,(a0)+
-        move.l  #$00e60000,(a0)+
+        move.w  #$00e0,(a0)+
+        move.w  d2,(a0)+
+        move.w  #$00e2,(a0)+
+        move.w  d1,(a0)+
+        move.w  #$00e4,(a0)+
+        move.w  d2,(a0)+
+        move.w  #$00e6,(a0)+
+        move.w  d1,(a0)+
         ; move.l  #$01800000,(a0)+
         move.l  #$01820000,(a0)+
         move.l  #$01840fff,(a0)+
@@ -178,19 +250,19 @@ StripeWall_CreateShadeTable:
         lea.l   StripeWallShadeTable(pc),a0
         move.w  (a1)+,d0
         move.w  (a1)+,d1
-        move.w  #64,d2
+        move.w  #70,d2
         jsr     CreateShadeTable
 
         lea.l   StripeWallShadeTable2(pc),a0
         move.w  (a1)+,d0
         move.w  (a1)+,d1
-        move.w  #64,d2
+        move.w  #70,d2
         jsr     CreateShadeTable
 
         lea.l   StripeWallShadeTable3(pc),a0
         move.w  (a1)+,d0
         move.w  (a1)+,d1
-        move.w  #64,d2
+        move.w  #70,d2
         jsr     CreateShadeTable
         rts
 
@@ -211,7 +283,10 @@ StripeWall_RenderWall:
         lea.l   StripeWallMovements(pc),a4
         lea.l   StripeWallShadeTable(pc),a5
         move.l  #BlankLine,d5
-        move.w  #STRIPEWALL_ROWS-1,d7
+        ; move.w  #STRIPEWALL_ROWS-1,d7
+        move.w  StripeWallRowsCount(pc),d7
+        subq.w  #1,d7
+        bmi.s   .noLines
 .setBpls:
         move.l  (a0)+,a2
 
@@ -262,7 +337,29 @@ StripeWall_RenderWall:
         ; swap    d0
 
 .skip:  dbf     d7,.setBpls
-        rts
+
+.noLines:
+        move.w  StripeWallRowsCount,d6
+        move.w  #256,d7
+        sub.w   d6,d7
+        beq.s   .done
+
+        move.l  #BlankLine,d0
+        move.l  d0,d1
+        swap    d0
+        move.l  StripeWallBplPtrListBuff,a0
+        add.w   d6,d6
+        add.w   d6,d6
+        lea.l   (a0,d6.w),a0
+        subq.w  #1,d7
+        bmi.s   .done
+.clrLoop:
+        move.l  (a0)+,a2
+        move.w  d0,SW_BPL1PTH(a2)
+        move.w  d1,SW_BPL1PTL(a2)
+        dbf     d7,.clrLoop
+
+.done:  rts
 
 StripeWall_RotateBars:
         lea.l	StripeWallBarAngles(pc),a0
@@ -572,8 +669,10 @@ StripeWall_CalculateMorph:
 
 ************************************************************
                         even
-StripeWall_LocalFrameCounter:           dc.w    0
-                        
+StripeWall_LocalFrameCounter:           
+                        dc.w    0
+StripeWallBounce:       dc.w    $200
+StripeWallRowsCount:    dc.w    0
 StripeWallScroll:       dc.w    0
 StripeWallMorphStep:    dc.w    0
 StripeWallWaveMovements:
@@ -614,9 +713,9 @@ StripeWallShadeList:    dc.w    $245,$adf
                         dc.w    $afd,$254
                         dc.w    $fad,$524
                         ; dc.w    $fff,$000
-StripeWallShadeTable:   ds.w    64
-StripeWallShadeTable2:  ds.w    64
-StripeWallShadeTable3:  ds.w    64
+StripeWallShadeTable:   ds.w    70
+StripeWallShadeTable2:  ds.w    70
+StripeWallShadeTable3:  ds.w    70
 
 ** Horizontal rotating bar
 StripeWallBarAngles:    dc.w	$10e,0,0

@@ -63,6 +63,7 @@ Credits_Run:
 	bsr	BltClr
 
         bsr     Credits_MoveShadowLayer
+        bsr     Credits_MoveBackgroundLines
 
         tst.b   Credits_DoExplode
         beq     .noExplode
@@ -135,12 +136,16 @@ Credits_Run:
         moveq   #32,d0
         moveq   #8-1,d1
         bsr     Fade
+        move.w  CreditsPalette+2,d1
+        move.w  d1,CreditsPaletteBg2+2
+        move.w  d1,CreditsPaletteBg3+2
         cmp.w   #33,d0
         bmi.s   .fadeDone
+        move.w  #$0156,CreditsPaletteBg2+2
+        move.w  #$0267,CreditsPaletteBg3+2
         st.b    Credits_FadeIn
         clr.w   FCnt
 .fadeDone:
-
         tst.b   Credits_FlashText
         beq.s   .noFlash
         lea.l   Credits_FlashPaletteFrom,a0
@@ -149,6 +154,13 @@ Credits_Run:
         moveq   #8,d0
         moveq   #6-1,d1
         bsr     Fade
+        ; cmp.w   #9,d0
+        ; bmi.s   .noFlash
+        ; lea.l   Credits_FlashPaletteTo,a0
+        ; add.w   #$111,(a0)
+        ; add.w   #$111,4(a0)
+        ; add.w   #$111,8(a0)
+
 .noFlash:
 
 	bsr	WaitBlitter
@@ -304,7 +316,7 @@ Credits_Interrupt:
 .morphIn:
         cmp.w   #1,d1
         bne.s   .printText
-        ; Use 64 for morphing to straight line
+
         cmp.w   #40,Credits_MorphStep
         beq     .rotate
         add.w   #1,Credits_MorphStep
@@ -316,7 +328,7 @@ Credits_Interrupt:
         cmp.w   #128,Credits_PrintText
         beq     .rotate
         add.w   #1,Credits_PrintText
-        bra.s   .rotate
+        bra    .rotate
 
 .morphOut:
         cmp.w   #3,d1
@@ -339,7 +351,15 @@ Credits_Interrupt:
         bne.s   .flash
         clr.b   Credits_FlashText
         clr.w   FCnt
-        add.l   #14*2,Credits_FlashPalettePtr
+        add.l   #16*2,Credits_FlashPalettePtr
+
+        cmp.l   #CreditsPaletteLine1,Credits_FlashPalettePtr
+        beq     .rotate
+
+        lea.l   Credits_FlashPaletteTo,a0
+        add.w   #$111,(a0)
+        add.w   #$111,4(a0)
+        add.w   #$111,8(a0)
         bra.s   .rotate
 
 .flash: cmp.w   #5,d1
@@ -421,6 +441,29 @@ Credits_MoveShadowLayer:
 
         rts
 
+Credits_MoveBackgroundLines:
+        lea.l   Sintab,a0
+        move.w  Credits_ShadowMoveX,d0
+        neg.w   d0
+        and.w   #$7fe,d0
+        move.w  (a0,d0.w),d0
+        asr.w   #8,d0
+        asr.w   #3,d0
+        add.w   #$80,d0
+        move.b  d0,CreditsPalette2Y
+
+        move.w  Credits_ShadowMoveX,d0
+        neg.w   d0
+        sub.w   Credits_ShadowMoveY,d0
+        asr.w   #1,d0
+        and.w   #$7fe,d0
+        move.w  (a0,d0.w),d0
+        asr.w   #8,d0
+        asr.w   #3,d0
+        add.w   #$d0,d0
+        move.b  d0,CreditsPalette3Y
+        rts
+
 ************************************************************
                         even
                         ; Effect types
@@ -482,12 +525,12 @@ Credits_LocalFrameCounter:
 Credits_PrintText:      dc.w    0
 Credits_Text:
                         dc.b    'MUSIC   '
-                        dc.b    'COREL   '
-                        dc.b    'MR MYGG '
+                        dc.b    '  MYGG  '
+                        dc.b    'VEDDER  '
                         dc.b    'GRAPHICS'
+                        dc.b    'COREL   '
+                        dc.b    'VEDDER  '
                         dc.b    'CODE    '
-                        dc.b    'VEDDER  '
-                        dc.b    'VEDDER  '
                         dc.b    'PROSPECT'
                         even
 Credits_TextPtr:        dc.l    Credits_Text
@@ -498,7 +541,7 @@ Credits_FadeIn:         dc.b    0,0
 ;****************************************
 ;
 ;0123456789012345678901234567890123456789
-;    MUSIC       VEDDER       MR MYGG
+;    MUSIC       VEDDER       MYGG
 ;
 ;0123456789012345678901234567890123456789
 ;          CODE        PROSPECT
@@ -509,12 +552,12 @@ CRED_LINE_1             = 28
 CRED_LINE_2             = 118
 CRED_LINE_3             = 204
 Credits_Positions:      dc.w    4*8,CRED_LINE_1
-                        dc.w    29*8,CRED_LINE_3
+                        dc.w    16*8,CRED_LINE_1
                         dc.w    29*8,CRED_LINE_1
                         dc.w    3*8,CRED_LINE_3
-                        dc.w    10*8,CRED_LINE_2
-                        dc.w    16*8,CRED_LINE_1
                         dc.w    17*8,CRED_LINE_3
+                        dc.w    29*8,CRED_LINE_3
+                        dc.w    10*8,CRED_LINE_2
                         dc.w    22*8,CRED_LINE_2
 Credits_PositionPtr:    dc.l    Credits_Positions
 
@@ -562,12 +605,12 @@ Credits_CubeXCenter:    dc.w    320/2
 Credits_CubeYCenter:    dc.w    256/2
 Credits_MorphStep:      dc.w    0
 Credits_MorphTarget:    dc.w    48,48
-                        dc.w    200,190
+                        dc.w    120,48
                         dc.w    200,48
                         dc.w    48,190
-                        dc.w    70,118
-                        dc.w    120,48
                         dc.w    120,190
+                        dc.w    200,190
+                        dc.w    70,118
                         dc.w    162,118
 Credits_MorphTargetPtr: dc.l    Credits_MorphTarget
 
@@ -579,11 +622,11 @@ Credits_ExplodeVelocities:
 Credits_DoExplode:      dc.b    0,0
 
 Credits_FromPalette:    dc.w    $048b,$048b,$048b,$048b,$048b,$048b,$048b,$048b
-Credits_ToPalette:      dc.w    $0045,$0f78,$0555,$0555,$0fbc,$0fbc,$0fbc,$0fbc
+Credits_ToPalette:      dc.w    $0045,$0f78,$0555,$0555,$0acc,$0acc,$0acc,$0acc
 Credits_FlashPaletteFrom:
                         dc.w    $0555,$0555,$0fff,$0fff,$0fff,$0fff
 Credits_FlashPaletteTo: dc.w    $0045,$0f78,$0045,$0f78,$0045,$0f78
-Credits_FlashPalettePtr:dc.l    CreditsPaletteLine1-(14*2)
+Credits_FlashPalettePtr:dc.l    CreditsPaletteLine1-(16*2)
 
 Credits_FlashText:      dc.w    0
 
